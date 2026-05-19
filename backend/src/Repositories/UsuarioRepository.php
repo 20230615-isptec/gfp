@@ -27,6 +27,7 @@ class UsuarioRepository
      * Nome da tabela de utilizadores
      */
     private const TABLE = 'utilizadores';
+    private ?string $resetTokenExpiryColumn = null;
 
     /**
      * Construtor - Injeção de Dependência do PDO
@@ -208,11 +209,13 @@ class UsuarioRepository
     {
         try {
             $resetExpires = date('Y-m-d H:i:s', time() + $expiracaoSegundos);
+            $expiryColumn = $this->getResetTokenExpiryColumn();
 
             $query = sprintf(
-                'UPDATE %s SET reset_token = :reset_token, reset_token_expires_at = :reset_token_expires_at 
+                'UPDATE %s SET reset_token = :reset_token, %s = :reset_token_expires_at 
                  WHERE id = :id',
-                self::TABLE
+                self::TABLE,
+                $expiryColumn
             );
 
             $stmt = $this->pdo->prepare($query);
@@ -240,13 +243,15 @@ class UsuarioRepository
     public function findByResetToken(string $resetToken): ?Usuario
     {
         try {
+            $expiryColumn = $this->getResetTokenExpiryColumn();
             $query = sprintf(
                 'SELECT id, nome, email, senha_hash, tipo_usuario_id, criado_em 
                  FROM %s 
                  WHERE reset_token = :reset_token 
-                 AND reset_token_expires_at > NOW() 
+                 AND %s > NOW() 
                  AND ativo = TRUE',
-                self::TABLE
+                self::TABLE,
+                $expiryColumn
             );
 
             $stmt = $this->pdo->prepare($query);
@@ -284,10 +289,12 @@ class UsuarioRepository
     public function clearResetToken(int $utilizadorId): bool
     {
         try {
+            $expiryColumn = $this->getResetTokenExpiryColumn();
             $query = sprintf(
-                'UPDATE %s SET reset_token = NULL, reset_token_expires_at = NULL 
+                'UPDATE %s SET reset_token = NULL, %s = NULL 
                  WHERE id = :id',
-                self::TABLE
+                self::TABLE,
+                $expiryColumn
             );
 
             $stmt = $this->pdo->prepare($query);
@@ -461,6 +468,19 @@ class UsuarioRepository
             error_log('Erro ao eliminar utilizador: ' . $e->getMessage());
             throw new PDOException('Erro ao eliminar utilizador: ' . $e->getMessage(), 0, $e);
         }
+    }
+
+    private function getResetTokenExpiryColumn(): string
+    {
+        if ($this->resetTokenExpiryColumn !== null) {
+            return $this->resetTokenExpiryColumn;
+        }
+
+        $stmt = $this->pdo->query('SHOW COLUMNS FROM ' . self::TABLE . " LIKE 'reset_token_expires_at'");
+        $existsNew = $stmt !== false && $stmt->fetch(PDO::FETCH_ASSOC) !== false;
+        $this->resetTokenExpiryColumn = $existsNew ? 'reset_token_expires_at' : 'reset_expires';
+
+        return $this->resetTokenExpiryColumn;
     }
 }
 ?>

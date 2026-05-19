@@ -17,7 +17,6 @@ export class ForgotPasswordComponent {
   hasError = false;
   successMessage = '';
   errorMessage = '';
-  devToken = '';
 
   constructor(
     private fb: FormBuilder,
@@ -42,12 +41,10 @@ export class ForgotPasswordComponent {
     this.hasError = false;
     this.errorMessage = '';
     this.successMessage = '';
-    this.devToken = '';
 
     this.authService.forgotPassword(this.form.value.email as string).subscribe({
       next: (response) => {
         this.successMessage = response.message;
-        this.devToken = response.dev_token ?? '';
         this.isLoading = false;
       },
       error: (error) => {

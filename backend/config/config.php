@@ -1,39 +1,35 @@
 <?php
 /**
- * Configurações Globais da Aplicação
- * 
- * Define variáveis de ambiente, conexão com banco de dados,
- * JWT keys e outras configurações críticas.
+ * Configuracoes Globais da Aplicacao
  */
 
-// Informações da API
-define('APP_NAME', 'Sistema de Gestão Financeira Pessoal');
+define('APP_NAME', 'Sistema de Gestao Financeira Pessoal');
 define('APP_VERSION', '1.0.0');
-define('ENVIRONMENT', 'development'); // development, staging, production
+define('ENVIRONMENT', 'development');
 
-// Configurações de Banco de Dados
 define('DB_HOST', 'localhost');
 define('DB_USER', 'root');
 define('DB_PASSWORD', '');
 define('DB_NAME', 'financas_pessoais');
 define('DB_PORT', 3306);
 
-// Configurações JWT
 define('JWT_SECRET', 'sua_chave_secreta_muito_segura_aqui');
 define('JWT_ALGORITHM', 'HS256');
-define('JWT_EXPIRATION', 3600); // 1 hora em segundos
+define('JWT_EXPIRATION', 3600);
 
-// CORS - Domínios permitidos
 define('ALLOWED_ORIGINS', [
     'http://localhost:4200',
     'http://localhost:3000'
 ]);
 
-// Modo debug
 define('DEBUG_MODE', true);
 
-/**
- * TODO: Implementar carregamento de variáveis de ambiente (.env)
- * TODO: Implementar sistema de conexão com banco de dados
- */
+// SMTP (envio real de e-mail)
+define('SMTP_HOST', 'smtp.gmail.com');
+define('SMTP_PORT', 587);
+define('SMTP_USERNAME', 'luisdalton353@gmail.com');
+define('SMTP_PASSWORD', 'jqamsqnkborjyiex');
+define('SMTP_FROM_EMAIL', 'luisdalton353@gmail.com');
+define('SMTP_FROM_NAME', 'FinanSmart');
+define('SMTP_SECURE', 'tls'); // tls | ssl | none
 ?>

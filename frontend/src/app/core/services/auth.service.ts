@@ -30,7 +30,6 @@ export interface ForgotPasswordResponse {
   success: boolean;
   message: string;
   expires_in?: number;
-  dev_token?: string;
 }
 
 export interface ResetPasswordResponse {

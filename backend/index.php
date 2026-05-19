@@ -131,6 +131,7 @@ require_once BASE_PATH . '/src/Repositories/CategoriaRepository.php';
 require_once BASE_PATH . '/src/Repositories/TransacaoRepository.php';
 require_once BASE_PATH . '/src/Services/JwtService.php';
 require_once BASE_PATH . '/src/Services/AuthService.php';
+require_once BASE_PATH . '/src/Services/SmtpMailer.php';
 require_once BASE_PATH . '/src/Services/PasswordRecoveryService.php';
 require_once BASE_PATH . '/src/Services/CategoriaService.php';
 require_once BASE_PATH . '/src/Services/TransacaoService.php';
@@ -270,7 +271,16 @@ $transacaoRepository = new \Src\Repositories\TransacaoRepository($pdo);
 
 $jwtService = new \Src\Services\JwtService();
 $authService = new \Src\Services\AuthService($usuarioRepository, $jwtService);
-$passwordRecoveryService = new \Src\Services\PasswordRecoveryService($usuarioRepository);
+$smtpMailer = new \Src\Services\SmtpMailer(
+    SMTP_HOST,
+    (int) SMTP_PORT,
+    SMTP_USERNAME,
+    SMTP_PASSWORD,
+    SMTP_FROM_EMAIL,
+    SMTP_FROM_NAME,
+    SMTP_SECURE
+);
+$passwordRecoveryService = new \Src\Services\PasswordRecoveryService($usuarioRepository, $smtpMailer);
 $categoriaService = new \Src\Services\CategoriaService($categoriaRepository);
 $transacaoService = new \Src\Services\TransacaoService($transacaoRepository);
 $dashboardService = new \Src\Services\DashboardService($transacaoRepository);
