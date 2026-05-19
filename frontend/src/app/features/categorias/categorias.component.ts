@@ -1,28 +1,22 @@
-import { Component, OnInit } from '@angular/core';
+﻿import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { CategoriaService, Categoria } from '../../services/categoria.service';
-
-// ========================================================================
-// COMPONENTE
-// ========================================================================
+import { TranslationPipe } from '../../core/i18n/translation.pipe';
+import { I18nService } from '../../core/i18n/i18n.service';
 
 @Component({
   selector: 'app-categorias',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule],
+  imports: [CommonModule, ReactiveFormsModule, TranslationPipe],
   templateUrl: './categorias.component.html',
   styleUrls: ['./categorias.component.scss']
 })
 export class CategoriasComponent implements OnInit {
-  // ====================================================================
-  // ESTADO
-  // ====================================================================
-
   categorias: Categoria[] = [];
   categoriasReceita: Categoria[] = [];
   categoriasDespesa: Categoria[] = [];
-  
+
   mostrarForm = false;
   isLoading = false;
   isSaving = false;
@@ -32,32 +26,18 @@ export class CategoriasComponent implements OnInit {
 
   categoriaForm: FormGroup;
 
-  // ====================================================================
-  // CONSTRUTOR
-  // ====================================================================
-
   constructor(
     private categoriaService: CategoriaService,
-    private fb: FormBuilder
+    private fb: FormBuilder,
+    private i18nService: I18nService
   ) {
     this.categoriaForm = this.criarFormulario();
   }
-
-  // ====================================================================
-  // LIFECYCLE
-  // ====================================================================
 
   ngOnInit(): void {
     this.carregarCategorias();
   }
 
-  // ====================================================================
-  // MÉTODOS PRIVADOS
-  // ====================================================================
-
-  /**
-   * Cria um novo FormGroup para o formulário de categorias
-   */
   private criarFormulario(): FormGroup {
     return this.fb.group({
       nome: ['', [Validators.required, Validators.minLength(3), Validators.maxLength(50)]],
@@ -65,9 +45,6 @@ export class CategoriasComponent implements OnInit {
     });
   }
 
-  /**
-   * Reseta o formulário aos valores padrão
-   */
   private resetarFormulario(): void {
     this.categoriaForm.reset({
       nome: '',
@@ -76,21 +53,11 @@ export class CategoriasComponent implements OnInit {
     this.editandoId = null;
   }
 
-  /**
-   * Segrega as categorias por tipo
-   */
   private segregarCategorias(): void {
-    this.categoriasReceita = this.categorias.filter(c => c.tipo === 'receita');
-    this.categoriasDespesa = this.categorias.filter(c => c.tipo === 'despesa');
+    this.categoriasReceita = this.categorias.filter((c) => c.tipo === 'receita');
+    this.categoriasDespesa = this.categorias.filter((c) => c.tipo === 'despesa');
   }
 
-  // ====================================================================
-  // MÉTODOS PÚBLICOS - CARREGAMENTO
-  // ====================================================================
-
-  /**
-   * Carrega a lista de categorias da API
-   */
   carregarCategorias(): void {
     this.isLoading = true;
     this.hasError = false;
@@ -108,22 +75,14 @@ export class CategoriasComponent implements OnInit {
         }
         this.isLoading = false;
       },
-      error: (error) => {
-        console.error('Erro ao carregar categorias:', error);
+      error: () => {
         this.hasError = true;
-        this.errorMessage = 'Erro ao carregar as categorias. Tente novamente.';
+        this.errorMessage = this.i18nService.translate('categories.loadError');
         this.isLoading = false;
       }
     });
   }
 
-  // ====================================================================
-  // MÉTODOS PÚBLICOS - FORMULÁRIO
-  // ====================================================================
-
-  /**
-   * Alterna a visibilidade do formulário
-   */
   toggleFormulario(): void {
     this.mostrarForm = !this.mostrarForm;
     if (!this.mostrarForm) {
@@ -131,9 +90,6 @@ export class CategoriasComponent implements OnInit {
     }
   }
 
-  /**
-   * Abre o formulário para editar uma categoria
-   */
   editar(categoria: Categoria): void {
     this.editandoId = categoria.id || null;
     this.categoriaForm.patchValue({
@@ -143,20 +99,14 @@ export class CategoriasComponent implements OnInit {
     this.mostrarForm = true;
   }
 
-  /**
-   * Cancela a edição/criação e fecha o formulário
-   */
   cancelar(): void {
     this.mostrarForm = false;
     this.resetarFormulario();
   }
 
-  /**
-   * Salva a categoria (cria ou atualiza)
-   */
   salvar(): void {
     if (!this.categoriaForm.valid) {
-      this.errorMessage = 'Por favor, preencha todos os campos corretamente.';
+      this.errorMessage = this.i18nService.translate('categories.invalidForm');
       return;
     }
 
@@ -164,39 +114,32 @@ export class CategoriasComponent implements OnInit {
     const formValue = this.categoriaForm.value;
 
     if (this.editandoId) {
-      // Atualizar categoria existente
       this.categoriaService.atualizar(this.editandoId, formValue).subscribe({
         next: () => {
           this.carregarCategorias();
           this.cancelar();
           this.isSaving = false;
         },
-        error: (error) => {
-          console.error('Erro ao atualizar categoria:', error);
-          this.errorMessage = 'Erro ao atualizar a categoria. Tente novamente.';
+        error: () => {
+          this.errorMessage = this.i18nService.translate('categories.updateError');
           this.isSaving = false;
         }
       });
     } else {
-      // Criar nova categoria
       this.categoriaService.criar(formValue).subscribe({
         next: () => {
           this.carregarCategorias();
           this.cancelar();
           this.isSaving = false;
         },
-        error: (error) => {
-          console.error('Erro ao criar categoria:', error);
-          this.errorMessage = 'Erro ao criar a categoria. Tente novamente.';
+        error: () => {
+          this.errorMessage = this.i18nService.translate('categories.createError');
           this.isSaving = false;
         }
       });
     }
   }
 
-  /**
-   * Remove uma categoria
-   */
   deletar(categoria: Categoria): void {
     if (!categoria.id) return;
 
@@ -205,43 +148,26 @@ export class CategoriasComponent implements OnInit {
         next: () => {
           this.carregarCategorias();
         },
-        error: (error) => {
-          console.error('Erro ao deletar categoria:', error);
-          this.errorMessage = 'Erro ao eliminar a categoria. Tente novamente.';
+        error: () => {
+          this.errorMessage = this.i18nService.translate('categories.deleteError');
         }
       });
     }
   }
 
-  // ====================================================================
-  // MÉTODOS PÚBLICOS - HELPERS
-  // ====================================================================
-
-  /**
-   * Retorna o titulo do formulário
-   */
   getTituloFormulario(): string {
-    return this.editandoId ? 'Editar Categoria' : 'Nova Categoria';
+    return this.editandoId
+      ? this.i18nService.translate('categories.editTitle')
+      : this.i18nService.translate('categories.createTitle');
   }
 
-  /**
-   * Retorna o texto do botão de salvar
-   */
   getTextoBotaoSalvar(): string {
-    return 'Guardar';
+    return this.i18nService.translate('categories.save');
   }
 
-  /**
-   * Verifica se está em modo edição
-   */
-  isEditando(): boolean {
-    return this.editandoId !== null;
-  }
-
-  /**
-   * Retorna o rótulo do tipo de categoria
-   */
   getLabelTipo(tipo: string): string {
-    return tipo === 'receita' ? 'Receita' : 'Despesa';
+    return tipo === 'receita'
+      ? this.i18nService.translate('categories.income')
+      : this.i18nService.translate('categories.expense');
   }
 }

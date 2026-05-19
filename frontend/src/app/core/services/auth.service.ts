@@ -26,6 +26,18 @@ export interface AuthResponse {
   };
 }
 
+export interface ForgotPasswordResponse {
+  success: boolean;
+  message: string;
+  expires_in?: number;
+  dev_token?: string;
+}
+
+export interface ResetPasswordResponse {
+  success: boolean;
+  message: string;
+}
+
 export interface UserData {
   id: number;
   nome: string;
@@ -90,6 +102,17 @@ export class AuthService {
           throw error;
         })
       );
+  }
+
+  forgotPassword(email: string): Observable<ForgotPasswordResponse> {
+    return this.http.post<ForgotPasswordResponse>(`${this.API_URL}/auth/forgot-password`, { email });
+  }
+
+  resetPassword(token: string, newPassword: string): Observable<ResetPasswordResponse> {
+    return this.http.post<ResetPasswordResponse>(`${this.API_URL}/auth/reset-password`, {
+      token,
+      new_password: newPassword
+    });
   }
 
   logout(): void {

@@ -1,4 +1,4 @@
-<div class="admin-container">
+﻿<div class="admin-container">
   <div *ngIf="isLoading" class="loading">
     <div class="spinner"></div>
   </div>
@@ -6,20 +6,20 @@
   <div *ngIf="!isLoading && (isAdmin$ | async)" class="admin-content">
     <div class="admin-header">
       <div>
-        <h1>Gestão de Utilizadores</h1>
-        <p>Apenas o administrador pode gerir os utilizadores do sistema.</p>
+        <h1>{{ 'admin.title' | t }}</h1>
+        <p>{{ 'admin.subtitle' | t }}</p>
       </div>
-      <button class="btn btn-primary" type="button" (click)="carregarUtilizadores()">Atualizar</button>
+      <button class="btn btn-primary" type="button" (click)="carregarUtilizadores()">{{ 'admin.refresh' | t }}</button>
     </div>
 
     <div *ngIf="hasError" class="alert-error">
-      <strong>Erro:</strong> {{ errorMessage }}
+      <strong>{{ 'transactions.error' | t }}:</strong> {{ errorMessage }}
     </div>
 
     <div *ngIf="!hasError" class="admin-body">
       <div class="admin-grid">
         <div class="admin-card">
-          <h3>Total de Utilizadores</h3>
+          <h3>{{ 'admin.totalUsers' | t }}</h3>
           <p>{{ usuarios.length }}</p>
         </div>
       </div>
@@ -28,12 +28,12 @@
         <table class="user-table">
           <thead>
             <tr>
-              <th>ID</th>
-              <th>Nome</th>
-              <th>Email</th>
-              <th>Tipo</th>
-              <th>Criado em</th>
-              <th>Ações</th>
+              <th>{{ 'admin.id' | t }}</th>
+              <th>{{ 'admin.name' | t }}</th>
+              <th>{{ 'admin.email' | t }}</th>
+              <th>{{ 'admin.type' | t }}</th>
+              <th>{{ 'admin.createdAt' | t }}</th>
+              <th>{{ 'admin.actions' | t }}</th>
             </tr>
           </thead>
           <tbody>
@@ -52,15 +52,15 @@
                   class="btn-action btn-tipo"
                   [disabled]="acaoEmProgresso['alterar-tipo-' + usuario.id] || usuario.id === adminLogado"
                   (click)="alternarTipo(usuario)"
-                  title="Alterar tipo de utilizador">
-                  {{ usuario.tipo_usuario_id === 1 ? 'Remover Admin' : 'Tornar Admin' }}
+                  [title]="'admin.changeTypeTitle' | t">
+                  {{ usuario.tipo_usuario_id === 1 ? ('admin.removeAdmin' | t) : ('admin.makeAdmin' | t) }}
                 </button>
                 <button 
                   class="btn-action btn-delete"
                   [disabled]="acaoEmProgresso['eliminar-' + usuario.id] || usuario.id === adminLogado"
                   (click)="eliminarUtilizador(usuario)"
-                  title="Eliminar utilizador">
-                  Eliminar
+                  [title]="'admin.deleteTitle' | t">
+                  {{ 'admin.delete' | t }}
                 </button>
               </td>
             </tr>
@@ -70,7 +70,7 @@
 
       <ng-template #semUsuarios>
         <div class="empty-state">
-          <p>Nenhum utilizador encontrado.</p>
+          <p>{{ 'admin.noUsers' | t }}</p>
         </div>
       </ng-template>
     </div>

@@ -210,7 +210,7 @@ class UsuarioRepository
             $resetExpires = date('Y-m-d H:i:s', time() + $expiracaoSegundos);
 
             $query = sprintf(
-                'UPDATE %s SET reset_token = :reset_token, reset_expires = :reset_expires 
+                'UPDATE %s SET reset_token = :reset_token, reset_token_expires_at = :reset_token_expires_at 
                  WHERE id = :id',
                 self::TABLE
             );
@@ -219,7 +219,7 @@ class UsuarioRepository
 
             $resultado = $stmt->execute([
                 ':reset_token' => $resetToken,
-                ':reset_expires' => $resetExpires,
+                ':reset_token_expires_at' => $resetExpires,
                 ':id' => $utilizadorId
             ]);
 
@@ -244,7 +244,7 @@ class UsuarioRepository
                 'SELECT id, nome, email, senha_hash, tipo_usuario_id, criado_em 
                  FROM %s 
                  WHERE reset_token = :reset_token 
-                 AND reset_expires > NOW() 
+                 AND reset_token_expires_at > NOW() 
                  AND ativo = TRUE',
                 self::TABLE
             );
@@ -285,7 +285,7 @@ class UsuarioRepository
     {
         try {
             $query = sprintf(
-                'UPDATE %s SET reset_token = NULL, reset_expires = NULL 
+                'UPDATE %s SET reset_token = NULL, reset_token_expires_at = NULL 
                  WHERE id = :id',
                 self::TABLE
             );

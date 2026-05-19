@@ -1,44 +1,38 @@
-<div class="transacoes-container">
+﻿<div class="transacoes-container">
   <div class="transacoes-header">
     <div>
-      <h2>Transações</h2>
-      <p>Seu extrato financeiro em tempo real</p>
+      <h2>{{ 'transactions.title' | t }}</h2>
+      <p>{{ 'transactions.subtitle' | t }}</p>
     </div>
 
     <div class="header-actions">
-      <button
-        class="btn-outline"
-        (click)="exportarRelatorio()"
-        [disabled]="isLoading || isExporting">
-        <span *ngIf="!isExporting">Exportar Relatório</span>
-        <span *ngIf="isExporting">Exportando...</span>
+      <button class="btn-outline" (click)="exportarRelatorio()" [disabled]="isLoading || isExporting">
+        <span *ngIf="!isExporting">{{ 'transactions.exportReport' | t }}</span>
+        <span *ngIf="isExporting">{{ 'dashboard.exporting' | t }}</span>
       </button>
 
-      <button
-        class="btn-primary"
-        (click)="toggleFormulario()"
-        [disabled]="isLoading">
-        <span *ngIf="!mostrarForm">+ Nova Transação</span>
-        <span *ngIf="mostrarForm">Fechar</span>
+      <button class="btn-primary" (click)="toggleFormulario()" [disabled]="isLoading">
+        <span *ngIf="!mostrarForm">{{ 'transactions.newTransaction' | t }}</span>
+        <span *ngIf="mostrarForm">{{ 'transactions.close' | t }}</span>
       </button>
     </div>
   </div>
 
   <div *ngIf="hasError" class="alert-error">
-    <strong>Erro:</strong> {{ errorMessage }}
+    <strong>{{ 'transactions.error' | t }}:</strong> {{ errorMessage }}
     <button class="alert-close" (click)="hasError = false">X</button>
   </div>
 
   <div *ngIf="isLoading" class="loading-container">
     <div class="spinner"></div>
-    <p>Carregando transações...</p>
+    <p>{{ 'transactions.loading' | t }}</p>
   </div>
 
   <div *ngIf="!isLoading && transacoes.length === 0 && !mostrarForm" class="empty-state">
-    <div class="empty-icon">Sem dados</div>
-    <h3>Não foram encontradas transações para este utilizador.</h3>
-    <p>Registe a primeira movimentação para iniciar o seu histórico financeiro.</p>
-    <button class="btn-primary" (click)="toggleFormulario()">+ Registar Primeira Transação</button>
+    <div class="empty-icon">{{ 'transactions.error' | t }}</div>
+    <h3>{{ 'transactions.noDataTitle' | t }}</h3>
+    <p>{{ 'transactions.noDataText' | t }}</p>
+    <button class="btn-primary" (click)="toggleFormulario()">{{ 'transactions.firstTransaction' | t }}</button>
   </div>
 
   <section *ngIf="!isLoading && transacoes.length > 0 && !mostrarForm" class="extrato-lista">
@@ -53,7 +47,7 @@
           <strong>{{ t.descricao }}</strong>
           <div class="item-subinfo">
             <span>{{ formatarData(t.data) }}</span>
-            <span class="dot">•</span>
+            <span class="dot">-</span>
             <span>{{ obterNomeCategoria(t.categoria_id) }}</span>
           </div>
         </div>
@@ -65,8 +59,8 @@
         </div>
 
         <div class="item-actions">
-          <button class="icon-btn" (click)="editar(t)" title="Editar">Editar</button>
-          <button class="icon-btn danger" (click)="deletar(t)" title="Apagar">Eliminar</button>
+          <button class="icon-btn" (click)="editar(t)" [title]="'transactions.edit' | t">{{ 'transactions.edit' | t }}</button>
+          <button class="icon-btn danger" (click)="deletar(t)" [title]="'transactions.delete' | t">{{ 'transactions.delete' | t }}</button>
         </div>
       </div>
     </article>
@@ -81,47 +75,47 @@
 
       <form [formGroup]="transacaoForm" (ngSubmit)="salvar()" class="transacao-form">
         <div class="form-group">
-          <label for="categoria_id">Categoria</label>
+          <label for="categoria_id">{{ 'transactions.category' | t }}</label>
           <select id="categoria_id" formControlName="categoria_id" class="form-control">
-            <option value="">Selecione uma categoria</option>
+            <option value="">{{ 'transactions.selectCategory' | t }}</option>
             <option *ngFor="let cat of categorias" [value]="cat.id">{{ cat.nome }}</option>
           </select>
         </div>
 
         <div class="form-group">
-          <label>Tipo</label>
+          <label>{{ 'transactions.type' | t }}</label>
           <div class="tipo-options">
             <label class="pill-option receita">
-              <input type="radio" value="receita" formControlName="tipo" /> Receita
+              <input type="radio" value="receita" formControlName="tipo" /> {{ 'transactions.income' | t }}
             </label>
             <label class="pill-option despesa">
-              <input type="radio" value="despesa" formControlName="tipo" /> Despesa
+              <input type="radio" value="despesa" formControlName="tipo" /> {{ 'transactions.expense' | t }}
             </label>
           </div>
         </div>
 
         <div class="form-grid">
           <div class="form-group">
-            <label for="valor">Valor (€)</label>
+            <label for="valor">{{ 'transactions.value' | t }}</label>
             <input id="valor" type="number" formControlName="valor" step="0.01" min="0" class="form-control" placeholder="0.00" />
           </div>
 
           <div class="form-group">
-            <label for="data">Data</label>
+            <label for="data">{{ 'transactions.date' | t }}</label>
             <input id="data" type="date" formControlName="data" class="form-control" />
           </div>
         </div>
 
         <div class="form-group">
-          <label for="descricao">Descrição</label>
-          <textarea id="descricao" formControlName="descricao" rows="3" class="form-control" placeholder="Descrição da movimentação"></textarea>
+          <label for="descricao">{{ 'transactions.description' | t }}</label>
+          <textarea id="descricao" formControlName="descricao" rows="3" class="form-control" [placeholder]="'transactions.descriptionPlaceholder' | t"></textarea>
         </div>
 
         <div class="form-actions">
-          <button type="button" class="btn-secondary" (click)="cancelar()" [disabled]="isSaving">Cancelar</button>
+          <button type="button" class="btn-secondary" (click)="cancelar()" [disabled]="isSaving">{{ 'transactions.cancel' | t }}</button>
           <button type="submit" class="btn-primary" [disabled]="!transacaoForm.valid || isSaving">
             <span *ngIf="!isSaving">{{ getTextoBotaoSalvar() }}</span>
-            <span *ngIf="isSaving">Guardando...</span>
+            <span *ngIf="isSaving">{{ 'transactions.saving' | t }}</span>
           </button>
         </div>
       </form>

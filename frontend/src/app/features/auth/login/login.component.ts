@@ -1,13 +1,16 @@
 import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
-import { Router } from '@angular/router';
+import { Router, RouterModule } from '@angular/router';
 import { AuthService, LoginRequest } from '../../../core/services/auth.service';
+import { I18nService } from '../../../core/i18n/i18n.service';
+import { TranslationPipe } from '../../../core/i18n/translation.pipe';
+import { LangSwitchComponent } from '../../../core/i18n/lang-switch.component';
 
 @Component({
   selector: 'app-login',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule],
+  imports: [CommonModule, ReactiveFormsModule, RouterModule, TranslationPipe, LangSwitchComponent],
   templateUrl: './login.component.html',
   styleUrls: ['./login.component.scss']
 })
@@ -20,7 +23,8 @@ export class LoginComponent {
   constructor(
     private fb: FormBuilder,
     private authService: AuthService,
-    private router: Router
+    private router: Router,
+    private i18nService: I18nService
   ) {
     this.form = this.fb.group({
       email: ['', [Validators.required, Validators.email]],
@@ -59,7 +63,7 @@ export class LoginComponent {
       error: (error: any) => {
         this.isLoading = false;
         this.hasError = true;
-        this.errorMessage = error?.error?.message || 'Erro ao fazer login. Verifique suas credenciais.';
+        this.errorMessage = error?.error?.message || this.i18nService.translate('login.invalidCredentials');
       }
     });
   }

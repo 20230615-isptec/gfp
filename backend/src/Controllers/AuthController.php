@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 declare(strict_types=1);
 
 namespace Src\Controllers;
@@ -6,12 +6,12 @@ namespace Src\Controllers;
 use Src\Services\AuthService;
 
 /**
- * Controlador de Autenticação
+ * Controlador de AutenticaÃ§Ã£o
  * 
- * Responsável por processar requisições HTTP relacionadas a autenticação:
+ * ResponsÃ¡vel por processar requisiÃ§Ãµes HTTP relacionadas a autenticaÃ§Ã£o:
  * - Registo de novos utilizadores
- * - Login (autenticação)
- * - Recuperação de senha
+ * - Login (autenticaÃ§Ã£o)
+ * - RecuperaÃ§Ã£o de senha
  * 
  * Retorna sempre respostas JSON com HTTP Status Codes apropriados.
  * 
@@ -20,19 +20,19 @@ use Src\Services\AuthService;
 class AuthController
 {
     /**
-     * Serviço de autenticação (Injeção de Dependência)
+     * ServiÃ§o de autenticaÃ§Ã£o (InjeÃ§Ã£o de DependÃªncia)
      * @var AuthService
      */
     private AuthService $authService;
 
     /**
-     * Serviço de recuperação de senha (Injeção de Dependência)
+     * ServiÃ§o de recuperaÃ§Ã£o de senha (InjeÃ§Ã£o de DependÃªncia)
      * @var \Src\Services\PasswordRecoveryService|null
      */
     private ?\Src\Services\PasswordRecoveryService $passwordRecoveryService;
 
     /**
-     * Construtor - Injeção de Dependência
+     * Construtor - InjeÃ§Ã£o de DependÃªncia
      * 
      * @param AuthService $authService
      * @param \Src\Services\PasswordRecoveryService|null $passwordRecoveryService
@@ -52,7 +52,7 @@ class AuthController
      * 
      * Request JSON esperado:
      * {
-     *   "nome": "João Silva",
+     *   "nome": "JoÃ£o Silva",
      *   "email": "joao@example.com",
      *   "senha": "senha_segura_123"
      * }
@@ -68,7 +68,7 @@ class AuthController
                 http_response_code(400);
                 echo json_encode([
                     'success' => false,
-                    'message' => 'Request JSON inválido'
+                    'message' => 'Request JSON invÃ¡lido'
                 ], JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT);
                 return;
             }
@@ -85,7 +85,7 @@ class AuthController
                 http_response_code(400);
                 echo json_encode([
                     'success' => false,
-                    'message' => 'Dados inválidos: nome, email e senha são obrigatórios'
+                    'message' => 'Dados invÃ¡lidos: nome, email e senha sÃ£o obrigatÃ³rios'
                 ], JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT);
                 return;
             }
@@ -94,7 +94,7 @@ class AuthController
                 http_response_code(400);
                 echo json_encode([
                     'success' => false,
-                    'message' => 'Email inválido'
+                    'message' => 'Email invÃ¡lido'
                 ], JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT);
                 return;
             }
@@ -106,7 +106,7 @@ class AuthController
         } catch (\Exception $e) {
             $mensagem = $e->getMessage();
 
-            if (strpos($mensagem, 'Email já cadastrado') !== false) {
+            if (strpos($mensagem, 'Email jÃ¡ cadastrado') !== false) {
                 http_response_code(409);
             } else {
                 http_response_code(400);
@@ -140,7 +140,7 @@ class AuthController
      * Response em caso de falha (401):
      * {
      *   "success": false,
-     *   "message": "Credenciais inválidas"
+     *   "message": "Credenciais invÃ¡lidas"
      * }
      * 
      * @return void
@@ -154,7 +154,7 @@ class AuthController
                 http_response_code(400);
                 echo json_encode([
                     'success' => false,
-                    'message' => 'Request JSON inválido'
+                    'message' => 'Request JSON invÃ¡lido'
                 ], JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT);
                 return;
             }
@@ -169,7 +169,7 @@ class AuthController
                 http_response_code(400);
                 echo json_encode([
                     'success' => false,
-                    'message' => 'Dados inválidos: email e senha são obrigatórios'
+                    'message' => 'Dados invÃ¡lidos: email e senha sÃ£o obrigatÃ³rios'
                 ], JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT);
                 return;
             }
@@ -180,7 +180,7 @@ class AuthController
                 http_response_code(401);
                 echo json_encode([
                     'success' => false,
-                    'message' => 'Credenciais inválidas'
+                    'message' => 'Credenciais invÃ¡lidas'
                 ], JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT);
                 return;
             }
@@ -214,7 +214,7 @@ class AuthController
     /**
      * Endpoint: POST /api/auth/forgot-password
      * 
-     * Solicitar recuperação de senha
+     * Solicitar recuperaÃ§Ã£o de senha
      * 
      * Request JSON esperado:
      * {
@@ -224,7 +224,7 @@ class AuthController
      * Response (200):
      * {
      *   "success": true,
-     *   "message": "Token de recuperação gerado com sucesso",
+     *   "message": "Token de recuperaÃ§Ã£o gerado com sucesso",
      *   "token": "token_seguro_aqui",
      *   "expires_in": 3600
      * }
@@ -232,7 +232,7 @@ class AuthController
      * Response (404):
      * {
      *   "success": false,
-     *   "message": "Email não encontrado"
+     *   "message": "Email nÃ£o encontrado"
      * }
      * 
      * @return void
@@ -244,7 +244,7 @@ class AuthController
                 http_response_code(500);
                 echo json_encode([
                     'success' => false,
-                    'message' => 'Serviço de recuperação não disponível'
+                    'message' => 'ServiÃ§o de recuperaÃ§Ã£o nÃ£o disponÃ­vel'
                 ], JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT);
                 return;
             }
@@ -255,7 +255,7 @@ class AuthController
                 http_response_code(400);
                 echo json_encode([
                     'success' => false,
-                    'message' => 'Request JSON inválido'
+                    'message' => 'Request JSON invÃ¡lido'
                 ], JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT);
                 return;
             }
@@ -267,7 +267,7 @@ class AuthController
                 http_response_code(400);
                 echo json_encode([
                     'success' => false,
-                    'message' => 'Email é obrigatório'
+                    'message' => 'Email Ã© obrigatÃ³rio'
                 ], JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT);
                 return;
             }
@@ -276,7 +276,7 @@ class AuthController
                 http_response_code(400);
                 echo json_encode([
                     'success' => false,
-                    'message' => 'Email inválido'
+                    'message' => 'Email invÃ¡lido'
                 ], JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT);
                 return;
             }
@@ -286,7 +286,7 @@ class AuthController
             http_response_code(200);
             echo json_encode($resultado, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT);
         } catch (\Exception $e) {
-            error_log('Erro ao solicitar recuperação de senha: ' . $e->getMessage());
+            error_log('Erro ao solicitar recuperaÃ§Ã£o de senha: ' . $e->getMessage());
 
             http_response_code(404);
             echo json_encode([
@@ -299,7 +299,7 @@ class AuthController
     /**
      * Endpoint: POST /api/auth/reset-password
      * 
-     * Redefinir senha com token de recuperação
+     * Redefinir senha com token de recuperaÃ§Ã£o
      * 
      * Request JSON esperado:
      * {
@@ -316,7 +316,7 @@ class AuthController
      * Response (400):
      * {
      *   "success": false,
-     *   "message": "Token inválido ou expirado"
+     *   "message": "Token invÃ¡lido ou expirado"
      * }
      * 
      * @return void
@@ -328,7 +328,7 @@ class AuthController
                 http_response_code(500);
                 echo json_encode([
                     'success' => false,
-                    'message' => 'Serviço de recuperação não disponível'
+                    'message' => 'ServiÃ§o de recuperaÃ§Ã£o nÃ£o disponÃ­vel'
                 ], JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT);
                 return;
             }
@@ -339,13 +339,13 @@ class AuthController
                 http_response_code(400);
                 echo json_encode([
                     'success' => false,
-                    'message' => 'Request JSON inválido'
+                    'message' => 'Request JSON invÃ¡lido'
                 ], JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT);
                 return;
             }
 
             $token = $input['token'] ?? '';
-            $novaSenha = $input['nova_senha'] ?? '';
+            $novaSenha = $input['nova_senha'] ?? ($input['new_password'] ?? '');
 
             $token = trim((string)$token);
             $novaSenha = trim((string)$novaSenha);
@@ -354,7 +354,7 @@ class AuthController
                 http_response_code(400);
                 echo json_encode([
                     'success' => false,
-                    'message' => 'Campos obrigatórios: token e nova_senha'
+                    'message' => 'Campos obrigatorios: token e new_password' 
                 ], JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT);
                 return;
             }
@@ -374,3 +374,4 @@ class AuthController
         }
     }
 }
+

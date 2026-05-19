@@ -1,72 +1,73 @@
-<div class="register-container">
+﻿<div class="register-container">
   <div class="register-card">
-    <h1>FinanSmart</h1>
-    <p class="subtitle">Crie sua conta</p>
+    <app-lang-switch></app-lang-switch>
+    <h1>{{ 'common.appName' | t }}</h1>
+    <p class="subtitle">{{ 'register.subtitle' | t }}</p>
 
     <form [formGroup]="form" (ngSubmit)="register()" class="register-form">
       <div class="form-group">
-        <label for="nome">Nome Completo</label>
+        <label for="nome">{{ 'register.fullNameLabel' | t }}</label>
         <input
           id="nome"
           type="text"
           formControlName="nome"
           class="form-input"
-          placeholder="Seu nome"
+          [placeholder]="'register.fullNamePlaceholder' | t"
           [class.error]="nome?.invalid && nome?.touched"
         />
         <span class="error-message" *ngIf="nome?.invalid && nome?.touched">
-          <span *ngIf="nome?.errors?.['required']">Nome é obrigatório</span>
-          <span *ngIf="nome?.errors?.['minlength']">Mínimo 3 caracteres</span>
+          <span *ngIf="nome?.errors?.['required']">{{ 'register.fullNameRequired' | t }}</span>
+          <span *ngIf="nome?.errors?.['minlength']">{{ 'register.fullNameMinLength' | t }}</span>
         </span>
       </div>
 
       <div class="form-group">
-        <label for="email">Email</label>
+        <label for="email">{{ 'login.emailLabel' | t }}</label>
         <input
           id="email"
           type="email"
           formControlName="email"
           class="form-input"
-          placeholder="seu@email.com"
+          [placeholder]="'login.emailPlaceholder' | t"
           [class.error]="email?.invalid && email?.touched"
         />
         <span class="error-message" *ngIf="email?.invalid && email?.touched">
-          <span *ngIf="email?.errors?.['required']">Email é obrigatório</span>
-          <span *ngIf="email?.errors?.['email']">Email inválido</span>
+          <span *ngIf="email?.errors?.['required']">{{ 'login.emailRequired' | t }}</span>
+          <span *ngIf="email?.errors?.['email']">{{ 'login.emailInvalid' | t }}</span>
         </span>
       </div>
 
       <div class="form-group">
-        <label for="password">Senha</label>
+        <label for="password">{{ 'login.passwordLabel' | t }}</label>
         <input
           id="password"
           type="password"
           formControlName="password"
           class="form-input"
-          placeholder="••••••••"
+          [placeholder]="'login.passwordPlaceholder' | t"
           [class.error]="password?.invalid && password?.touched"
         />
         <span class="error-message" *ngIf="password?.invalid && password?.touched">
-          <span *ngIf="password?.errors?.['required']">Senha é obrigatória</span>
-          <span *ngIf="password?.errors?.['minlength']">Mínimo 6 caracteres</span>
+          <span *ngIf="password?.errors?.['required']">{{ 'login.passwordRequired' | t }}</span>
+          <span *ngIf="password?.errors?.['minlength']">{{ 'login.passwordMinLength' | t }}</span>
         </span>
       </div>
 
       <div class="form-group">
-        <label for="confirmPassword">Confirmar Senha</label>
+        <label for="confirmPassword">{{ 'register.confirmPasswordLabel' | t }}</label>
         <input
           id="confirmPassword"
           type="password"
           formControlName="confirmPassword"
           class="form-input"
-          placeholder="••••••••"
+          [placeholder]="'login.passwordPlaceholder' | t"
           [class.error]="confirmPassword?.invalid && confirmPassword?.touched"
         />
         <span class="error-message" *ngIf="confirmPassword?.invalid && confirmPassword?.touched">
-          <span *ngIf="confirmPassword?.errors?.['required']">Confirme a senha</span>
+          <span *ngIf="confirmPassword?.errors?.['required']">{{ 'register.confirmPasswordRequired' | t }}</span>
         </span>
         <span class="error-message" *ngIf="form.errors?.['passwordMismatch'] && confirmPassword?.touched">
-          As senhas não coincidem
+          {{ 'register.passwordMismatch' | t }}
         </span>
       </div>
 
@@ -79,13 +80,13 @@
         class="btn btn-primary"
         [disabled]="form.invalid || isLoading"
       >
-        <span *ngIf="!isLoading">Registrar</span>
-        <span *ngIf="isLoading">Registrando...</span>
+        <span *ngIf="!isLoading">{{ 'register.submit' | t }}</span>
+        <span *ngIf="isLoading">{{ 'register.submitting' | t }}</span>
       </button>
     </form>
 
     <div class="form-footer">
-      <p>Já tem uma conta? <a href="javascript:void(0)" (click)="goToLogin()">Entrar aqui</a></p>
+      <p>{{ 'register.hasAccount' | t }} <a href="javascript:void(0)" (click)="goToLogin()">{{ 'register.loginHere' | t }}</a></p>
     </div>
   </div>
 </div>

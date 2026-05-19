@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+﻿import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { DashboardService } from '../../services/dashboard.service';
@@ -7,6 +7,8 @@ import { AuthService } from '../../core/services/auth.service';
 import { TransacaoService, Transacao } from '../../services/transacao.service';
 import { CategoriaService, Categoria } from '../../services/categoria.service';
 import { forkJoin } from 'rxjs';
+import { TranslationPipe } from '../../core/i18n/translation.pipe';
+import { I18nService } from '../../core/i18n/i18n.service';
 
 interface DashboardResumo {
   saldo_atual: number;
@@ -23,12 +25,6 @@ interface Cotacoes {
   AOA_EUR?: { cotacao: number; baixa?: number; alta?: number };
 }
 
-interface DashboardData {
-  resumo: DashboardResumo;
-  cotacoes_atuais: Cotacoes;
-  data_atualizacao: string;
-}
-
 interface DashboardResponse {
   success: boolean;
   resumo: DashboardResumo;
@@ -39,7 +35,7 @@ interface DashboardResponse {
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [CommonModule, RouterLink],
+  imports: [CommonModule, RouterLink, TranslationPipe],
   templateUrl: './dashboard.component.html',
   styleUrls: ['./dashboard.component.scss']
 })
@@ -56,7 +52,6 @@ export class DashboardComponent implements OnInit {
   transacoesRecentes: Transacao[] = [];
   categoriasMap: Record<number, string> = {};
 
-  // Valores convertidos
   saldoEmUSD = 0;
   saldoEmEUR = 0;
   receitasEmUSD = 0;
@@ -67,11 +62,12 @@ export class DashboardComponent implements OnInit {
     private exportService: ExportService,
     private authService: AuthService,
     private transacaoService: TransacaoService,
-    private categoriaService: CategoriaService
+    private categoriaService: CategoriaService,
+    private i18nService: I18nService
   ) { }
 
   ngOnInit(): void {
-    this.nomeUtilizador = this.authService.getUserData()?.nome || 'utilizador';
+    this.nomeUtilizador = this.authService.getUserData()?.nome || this.i18nService.translate('dashboard.unknownUser');
     this.carregarDados();
   }
 
@@ -99,10 +95,7 @@ export class DashboardComponent implements OnInit {
           ? new Date(dashboardData.data_atualizacao).toLocaleString('pt-BR')
           : new Date().toLocaleString('pt-BR');
 
-        const categoriasData = Array.isArray(categorias.data)
-          ? (categorias.data as Categoria[])
-          : [];
-
+        const categoriasData = Array.isArray(categorias.data) ? (categorias.data as Categoria[]) : [];
         this.categoriasMap = categoriasData.reduce<Record<number, string>>((acc, categoria) => {
           if (categoria.id) {
             acc[categoria.id] = categoria.nome;
@@ -110,10 +103,7 @@ export class DashboardComponent implements OnInit {
           return acc;
         }, {});
 
-        const transacoesData = Array.isArray(transacoes.data)
-          ? (transacoes.data as Transacao[])
-          : [];
-
+        const transacoesData = Array.isArray(transacoes.data) ? (transacoes.data as Transacao[]) : [];
         this.transacoesRecentes = transacoesData.slice(0, 5);
 
         this.calcularConversoes();
@@ -122,7 +112,7 @@ export class DashboardComponent implements OnInit {
       error: (error: any) => {
         console.error('Erro ao carregar dashboard:', error);
         this.hasError = true;
-        this.errorMessage = 'Erro ao carregar dados do dashboard. Tente novamente.';
+        this.errorMessage = this.i18nService.translate('dashboard.loadError');
         this.resumo = {
           saldo_atual: 0,
           receitas: 0,
@@ -168,9 +158,6 @@ export class DashboardComponent implements OnInit {
     this.carregarDados();
   }
 
-  /**
-   * Inicia o download do relatório CSV
-   */
   exportarCsv(): void {
     this.isExporting = true;
     this.hasError = false;
@@ -181,7 +168,7 @@ export class DashboardComponent implements OnInit {
     } catch (error: any) {
       console.error('Erro ao exportar:', error);
       this.hasError = true;
-      this.errorMessage = error.message || 'Erro ao exportar o relatório. Tente novamente.';
+      this.errorMessage = error.message || this.i18nService.translate('dashboard.exportError');
       this.isExporting = false;
     }
   }
@@ -201,6 +188,6 @@ export class DashboardComponent implements OnInit {
   }
 
   obterNomeCategoria(categoriaId: number): string {
-    return this.categoriasMap[categoriaId] || 'Sem categoria';
+    return this.categoriasMap[categoriaId] || this.i18nService.translate('dashboard.uncategorized');
   }
 }

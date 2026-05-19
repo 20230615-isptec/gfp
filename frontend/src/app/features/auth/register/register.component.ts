@@ -3,11 +3,14 @@ import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
 import { AuthService, RegisterRequest } from '../../../core/services/auth.service';
+import { I18nService } from '../../../core/i18n/i18n.service';
+import { TranslationPipe } from '../../../core/i18n/translation.pipe';
+import { LangSwitchComponent } from '../../../core/i18n/lang-switch.component';
 
 @Component({
   selector: 'app-register',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule],
+  imports: [CommonModule, ReactiveFormsModule, TranslationPipe, LangSwitchComponent],
   templateUrl: './register.component.html',
   styleUrls: ['./register.component.scss']
 })
@@ -20,7 +23,8 @@ export class RegisterComponent {
   constructor(
     private fb: FormBuilder,
     private authService: AuthService,
-    private router: Router
+    private router: Router,
+    private i18nService: I18nService
   ) {
     this.form = this.fb.group({
       nome: ['', [Validators.required, Validators.minLength(3)]],
@@ -81,7 +85,7 @@ export class RegisterComponent {
       error: (error: any) => {
         this.isLoading = false;
         this.hasError = true;
-        this.errorMessage = error?.error?.message || 'Erro ao registrar. Tente novamente.';
+        this.errorMessage = error?.error?.message || this.i18nService.translate('register.registerError');
       }
     });
   }

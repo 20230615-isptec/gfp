@@ -1,36 +1,33 @@
-<div class="categorias-container">
+﻿<div class="categorias-container">
   <div class="categorias-header">
     <div>
-      <h2>Categorias</h2>
-      <p>Organize receitas e despesas com etiquetas claras</p>
+      <h2>{{ 'categories.title' | t }}</h2>
+      <p>{{ 'categories.subtitle' | t }}</p>
     </div>
 
     <div class="header-actions">
-      <button
-        class="btn-primary"
-        (click)="toggleFormulario()"
-        [disabled]="isLoading">
-        <span *ngIf="!mostrarForm">+ Nova Categoria</span>
-        <span *ngIf="mostrarForm">Fechar</span>
+      <button class="btn-primary" (click)="toggleFormulario()" [disabled]="isLoading">
+        <span *ngIf="!mostrarForm">{{ 'categories.newCategory' | t }}</span>
+        <span *ngIf="mostrarForm">{{ 'transactions.close' | t }}</span>
       </button>
     </div>
   </div>
 
   <div *ngIf="hasError" class="alert-error">
-    <strong>Erro:</strong> {{ errorMessage }}
+    <strong>{{ 'transactions.error' | t }}:</strong> {{ errorMessage }}
     <button class="alert-close" (click)="hasError = false">X</button>
   </div>
 
   <div *ngIf="isLoading" class="loading-container">
     <div class="spinner"></div>
-    <p>Carregando categorias...</p>
+    <p>{{ 'categories.loading' | t }}</p>
   </div>
 
   <div *ngIf="!isLoading && categorias.length === 0 && !mostrarForm" class="empty-state">
-    <div class="empty-icon">Sem categorias</div>
-    <h3>Nenhuma categoria registada</h3>
-    <p>Precisa de pelo menos uma categoria criada para classificar as transações.</p>
-    <button class="btn-primary" (click)="toggleFormulario()">+ Criar Categoria</button>
+    <div class="empty-icon">{{ 'categories.emptyIcon' | t }}</div>
+    <h3>{{ 'categories.emptyTitle' | t }}</h3>
+    <p>{{ 'categories.emptyText' | t }}</p>
+    <button class="btn-primary" (click)="toggleFormulario()">{{ 'categories.createCategory' | t }}</button>
   </div>
 
   <section *ngIf="!isLoading && categorias.length > 0 && !mostrarForm" class="categoria-lista">
@@ -44,14 +41,14 @@
         <div class="item-info">
           <strong>{{ cat.nome }}</strong>
           <span class="cat-badge" [class.receita]="cat.tipo === 'receita'" [class.despesa]="cat.tipo === 'despesa'">
-            {{ cat.tipo === 'receita' ? 'Receita' : 'Despesa' }}
+            {{ getLabelTipo(cat.tipo) }}
           </span>
         </div>
       </div>
 
       <div class="item-actions">
-        <button class="icon-btn" (click)="editar(cat)" title="Editar">Editar</button>
-        <button class="icon-btn danger" (click)="deletar(cat)" title="Apagar">Eliminar</button>
+        <button class="icon-btn" (click)="editar(cat)" [title]="'categories.edit' | t">{{ 'categories.edit' | t }}</button>
+        <button class="icon-btn danger" (click)="deletar(cat)" [title]="'categories.delete' | t">{{ 'categories.delete' | t }}</button>
       </div>
     </article>
   </section>
@@ -65,27 +62,27 @@
 
       <form [formGroup]="categoriaForm" (ngSubmit)="salvar()" class="categoria-form">
         <div class="form-group">
-          <label for="nome">Nome da categoria</label>
-          <input id="nome" type="text" formControlName="nome" class="form-control" placeholder="Ex: Alimentação" />
+          <label for="nome">{{ 'categories.name' | t }}</label>
+          <input id="nome" type="text" formControlName="nome" class="form-control" [placeholder]="'categories.namePlaceholder' | t" />
         </div>
 
         <div class="form-group">
-          <label>Tipo</label>
+          <label>{{ 'categories.type' | t }}</label>
           <div class="tipo-options">
             <label class="pill-option receita">
-              <input type="radio" value="receita" formControlName="tipo" /> Receita
+              <input type="radio" value="receita" formControlName="tipo" /> {{ 'categories.income' | t }}
             </label>
             <label class="pill-option despesa">
-              <input type="radio" value="despesa" formControlName="tipo" /> Despesa
+              <input type="radio" value="despesa" formControlName="tipo" /> {{ 'categories.expense' | t }}
             </label>
           </div>
         </div>
 
         <div class="form-actions">
-          <button type="button" class="btn-secondary" (click)="cancelar()" [disabled]="isSaving">Cancelar</button>
+          <button type="button" class="btn-secondary" (click)="cancelar()" [disabled]="isSaving">{{ 'categories.cancel' | t }}</button>
           <button type="submit" class="btn-primary" [disabled]="!categoriaForm.valid || isSaving">
             <span *ngIf="!isSaving">{{ getTextoBotaoSalvar() }}</span>
-            <span *ngIf="isSaving">Guardando...</span>
+            <span *ngIf="isSaving">{{ 'categories.saving' | t }}</span>
           </button>
         </div>
       </form>

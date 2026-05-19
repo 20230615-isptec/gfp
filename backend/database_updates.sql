@@ -13,3 +13,15 @@ CREATE INDEX idx_reset_expires ON utilizadores(reset_expires);
 -- ========================================================================
 -- FIM DAS ALTERAÇÕES
 -- ========================================================================
+
+-- ========================================================================
+-- V2 - Nome de coluna padronizado para expiracao do token
+-- ========================================================================
+ALTER TABLE utilizadores
+  ADD COLUMN IF NOT EXISTS reset_token_expires_at DATETIME NULL;
+
+UPDATE utilizadores
+SET reset_token_expires_at = reset_expires
+WHERE reset_expires IS NOT NULL;
+
+CREATE INDEX IF NOT EXISTS idx_reset_token_expires_at ON utilizadores(reset_token_expires_at);

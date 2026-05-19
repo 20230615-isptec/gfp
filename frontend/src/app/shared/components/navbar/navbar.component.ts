@@ -1,15 +1,17 @@
-import { Component, OnInit } from '@angular/core';
+﻿import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule, Router, NavigationEnd } from '@angular/router';
 import { filter } from 'rxjs/operators';
 import { AuthService } from '../../../core/services/auth.service';
 import { ThemeService } from '../../../core/services/theme.service';
 import { ExportService } from '../../../services/export.service';
+import { TranslationPipe } from '../../../core/i18n/translation.pipe';
+import { LangSwitchComponent } from '../../../core/i18n/lang-switch.component';
 
 @Component({
   selector: 'app-navbar',
   standalone: true,
-  imports: [CommonModule, RouterModule],
+  imports: [CommonModule, RouterModule, TranslationPipe, LangSwitchComponent],
   templateUrl: './navbar.component.html',
   styleUrls: ['./navbar.component.scss']
 })
@@ -19,7 +21,7 @@ export class NavbarComponent implements OnInit {
   isMobileMenuOpen = false;
   isDarkMode = false;
   userName: string | null = null;
-  pageTitle = 'Visão Geral';
+  pageTitleKey = 'navbar.overview';
 
   constructor(
     private authService: AuthService,
@@ -33,25 +35,23 @@ export class NavbarComponent implements OnInit {
     this.checkThemeMode();
     this.updatePageTitle(this.router.url);
 
-    // Subscrever a mudanças no estado de autenticação
     this.authService.isLoggedIn$.subscribe((loggedIn: boolean) => {
       this.isLoggedIn = loggedIn;
       if (loggedIn) {
         const userData = this.authService.getUserData();
         if (userData) {
           this.userName = userData.nome;
-          this.isAdmin = userData.role === 1; // role 1 = admin
+          this.isAdmin = userData.role === 1;
         }
       }
     });
 
-    this.router.events.pipe(
-      filter((event): event is NavigationEnd => event instanceof NavigationEnd)
-    ).subscribe((event: NavigationEnd) => {
-      this.updatePageTitle(event.urlAfterRedirects);
-    });
+    this.router.events
+      .pipe(filter((event): event is NavigationEnd => event instanceof NavigationEnd))
+      .subscribe((event: NavigationEnd) => {
+        this.updatePageTitle(event.urlAfterRedirects);
+      });
 
-    // Subscrever a mudanças no tema
     this.themeService.isDarkMode$.subscribe((isDark: boolean) => {
       this.isDarkMode = isDark;
     });
@@ -103,13 +103,13 @@ export class NavbarComponent implements OnInit {
 
   private updatePageTitle(url: string): void {
     if (url.startsWith('/admin')) {
-      this.pageTitle = 'Administração';
+      this.pageTitleKey = 'navbar.administration';
     } else if (url.startsWith('/transacoes')) {
-      this.pageTitle = 'Transações';
+      this.pageTitleKey = 'navbar.transactions';
     } else if (url.startsWith('/categorias')) {
-      this.pageTitle = 'Categorias';
+      this.pageTitleKey = 'navbar.categories';
     } else {
-      this.pageTitle = 'Visão Geral';
+      this.pageTitleKey = 'navbar.overview';
     }
   }
 }
