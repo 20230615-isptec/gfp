@@ -1,0 +1,247 @@
+/* ========================================================================
+   ESTILOS GLOBAIS DA APLICAÇÃO
+   ======================================================================== */
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+/* Variáveis de tema globais (usadas por componentes) */
+:root {
+  --primary-color: #2563eb;
+  --primary-dark: #1e40af;
+  --primary-light: #3b82f6;
+
+  --success-color: #10b981;
+  --success-light: #d1fae5;
+  --success-dark: #047857;
+
+  --error-color: #ef4444;
+  --error-light: #fee2e2;
+  --error-dark: #dc2626;
+
+  --warning-color: #f59e0b;
+  --warning-light: #fef3c7;
+
+  --bg-light: #ffffff;
+  --bg-light-secondary: #f9fafb;
+  --bg-light-tertiary: #f3f4f6;
+
+  --bg-dark: #1f2937;
+  --bg-dark-secondary: #111827;
+  --bg-dark-tertiary: #374151;
+
+  --text-light: #1f2937;
+  --text-light-muted: #6b7280;
+
+  --text-dark: #f3f4f6;
+  --text-dark-muted: #9ca3af;
+
+  --border-light: #e5e7eb;
+  --border-dark: #374151;
+
+  --card-bg: var(--bg-light);
+  --card-bg-dark: var(--bg-dark-tertiary);
+  --bg-page: var(--bg-light);
+  --background-color: var(--bg-light);
+}
+
+html.dark-mode, body.dark-mode {
+  --card-bg: var(--card-bg-dark);
+  --bg-page: var(--bg-dark);
+  --background-color: var(--bg-dark);
+  --text-light: var(--text-dark);
+  --text-light-muted: var(--text-dark-muted);
+  --border-light: var(--border-dark);
+  --bg-light-secondary: var(--bg-dark-secondary);
+  --bg-light-tertiary: var(--bg-dark-tertiary);
+  --success-light: rgba(4, 120, 87, 0.18);
+  --error-light: rgba(220, 38, 38, 0.18);
+  --warning-light: rgba(245, 158, 11, 0.18);
+}
+
+/* Regras globais para elementos que usam valores RGBA fixos */
+.topbar {
+  background: rgba(248, 250, 252, 0.85);
+}
+
+html.dark-mode .topbar {
+  background: rgba(15, 23, 42, 0.78) !important;
+  border-bottom-color: rgba(71, 85, 105, 0.5) !important;
+}
+
+html.dark-mode .dashboard-container {
+  background: var(--bg-dark) !important;
+}
+
+/* Contraste reforcado para links e estados ativos em modo escuro */
+html.dark-mode .brand,
+html.dark-mode .brand .brand-text strong,
+html.dark-mode .brand .brand-text span {
+  color: var(--text-dark) !important;
+}
+
+html.dark-mode .side-link:hover,
+html.dark-mode .side-link.active {
+  color: #dbeafe !important;
+  background: rgba(147, 197, 253, 0.18) !important;
+}
+
+html.dark-mode .side-action.danger {
+  background: rgba(127, 29, 29, 0.55) !important;
+  color: #fee2e2 !important;
+}
+
+html.dark-mode .btn-outline {
+  border-color: #64748b !important;
+  color: #e2e8f0 !important;
+  background: transparent !important;
+}
+
+html.dark-mode .icon-btn.danger {
+  color: #fca5a5 !important;
+}
+
+html.dark-mode .dashboard-container .cambio-item strong,
+html.dark-mode .dashboard-container .recent-head a,
+html.dark-mode .dashboard-container .recent-empty a,
+html.dark-mode .dashboard-container .action-btn.ghost {
+  color: #93c5fd !important;
+}
+
+html.dark-mode .dashboard-container .money.negative,
+html.dark-mode .dashboard-container .recent-value.negative {
+  color: #fca5a5 !important;
+}
+
+html {
+  scroll-behavior: smooth;
+  color-scheme: light;
+}
+
+html.dark-mode {
+  color-scheme: dark;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  background-color: #ffffff;
+  color: #1f2937;
+  transition: background-color 0.3s ease, color 0.3s ease;
+  margin: 0;
+  padding: 0;
+}
+
+body.dark-mode {
+  background-color: #1f2937;
+  color: #f3f4f6;
+}
+
+/* Scrollbar customizada */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background-color: #f9fafb;
+}
+
+body.dark-mode ::-webkit-scrollbar-track {
+  background-color: #111827;
+}
+
+::-webkit-scrollbar-thumb {
+  background-color: #e5e7eb;
+  border-radius: 5px;
+}
+
+body.dark-mode ::-webkit-scrollbar-thumb {
+  background-color: #374151;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background-color: #2563eb;
+}
+
+/* Links */
+a {
+  color: #2563eb;
+  text-decoration: none;
+  transition: color 0.3s ease;
+}
+
+body.dark-mode a {
+  color: #93c5fd;
+}
+
+a:hover {
+  color: #1e40af;
+}
+
+body.dark-mode a:hover {
+  color: #bfdbfe;
+}
+
+/* Botões */
+button {
+  font-family: inherit;
+  transition: all 0.3s ease;
+}
+
+button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Inputs */
+input,
+textarea,
+select {
+  font-family: inherit;
+  font-size: inherit;
+}
+
+/* Tabelas */
+table {
+  border-collapse: collapse;
+  width: 100%;
+}
+
+th {
+  background-color: #f9fafb;
+  color: #1f2937;
+  font-weight: 700;
+  text-align: left;
+  padding: 1rem;
+  border-bottom: 2px solid #e5e7eb;
+}
+
+body.dark-mode th {
+  background-color: #374151;
+  color: #f3f4f6;
+  border-bottom-color: #374151;
+}
+
+td {
+  padding: 1rem;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+body.dark-mode td {
+  border-bottom-color: #374151;
+}
+
+tr:hover {
+  background-color: #f9fafb;
+}
+
+body.dark-mode tr:hover {
+  background-color: #374151;
+}

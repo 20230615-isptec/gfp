@@ -1,0 +1,70 @@
+<aside *ngIf="isLoggedIn" class="sidebar">
+  <a [routerLink]="isAdmin ? '/admin' : '/dashboard'" class="brand" (click)="closeMobileMenu()">
+    <span class="brand-mark">FS</span>
+    <div class="brand-text">
+      <strong>FinanSmart</strong>
+      <span>Financial Cloud</span>
+    </div>
+  </a>
+
+  <nav class="side-nav">
+    <ng-container *ngIf="!isAdmin; else adminNav">
+      <a routerLink="/dashboard" routerLinkActive="active" class="side-link" (click)="closeMobileMenu()"><span>Visão Geral</span></a>
+      <a routerLink="/transacoes" routerLinkActive="active" class="side-link" (click)="closeMobileMenu()"><span>Transações</span></a>
+      <a routerLink="/categorias" routerLinkActive="active" class="side-link" (click)="closeMobileMenu()"><span>Categorias</span></a>
+    </ng-container>
+    <ng-template #adminNav>
+      <a routerLink="/admin" routerLinkActive="active" class="side-link" (click)="closeMobileMenu()"><span>Administração</span></a>
+    </ng-template>
+  </nav>
+
+  <div class="sidebar-footer">
+    <button class="side-action" (click)="exportCSV()" title="Exportar transações em CSV">Exportar CSV</button>
+    <button class="side-action danger" (click)="logout()" title="Sair da conta">Terminar sessão</button>
+  </div>
+</aside>
+
+<header class="topbar" [class.with-sidebar]="isLoggedIn">
+  <div class="topbar-left">
+    <h1>{{ pageTitle }}</h1>
+    <p *ngIf="isLoggedIn">Olá, <strong>{{ userName }}</strong></p>
+  </div>
+
+  <div class="topbar-right">
+    <a *ngIf="!isLoggedIn" routerLink="/login" class="auth-link">Entrar</a>
+    <a *ngIf="!isLoggedIn" routerLink="/register" class="auth-link primary">Registrar</a>
+
+    <button *ngIf="isLoggedIn" class="mobile-menu-btn" [class.active]="isMobileMenuOpen" (click)="toggleMobileMenu()" aria-label="Abrir menu">
+      Menu
+    </button>
+
+    <button class="theme-toggle" (click)="toggleTheme()" [title]="isDarkMode ? 'Modo Claro' : 'Modo Escuro'">
+      Tema
+    </button>
+  </div>
+</header>
+
+<div *ngIf="isLoggedIn" class="mobile-drawer" [class.open]="isMobileMenuOpen">
+  <ng-container *ngIf="!isAdmin; else adminDrawerNav">
+    <a routerLink="/dashboard" routerLinkActive="active" class="drawer-link" (click)="closeMobileMenu()">Visão Geral</a>
+    <a routerLink="/transacoes" routerLinkActive="active" class="drawer-link" (click)="closeMobileMenu()">Transações</a>
+    <a routerLink="/categorias" routerLinkActive="active" class="drawer-link" (click)="closeMobileMenu()">Categorias</a>
+  </ng-container>
+  <ng-template #adminDrawerNav>
+    <a routerLink="/admin" routerLinkActive="active" class="drawer-link" (click)="closeMobileMenu()">Administração</a>
+  </ng-template>
+  <button class="drawer-link" (click)="exportCSV(); closeMobileMenu()">Exportar CSV</button>
+  <button class="drawer-link danger" (click)="logout()">Terminar sessão</button>
+</div>
+
+<nav *ngIf="isLoggedIn" class="bottom-nav">
+  <ng-container *ngIf="!isAdmin; else adminBottomNav">
+    <a routerLink="/dashboard" routerLinkActive="active" class="bottom-link"><span>Início</span></a>
+    <a routerLink="/transacoes" routerLinkActive="active" class="bottom-link"><span>Transações</span></a>
+    <a routerLink="/categorias" routerLinkActive="active" class="bottom-link"><span>Categorias</span></a>
+  </ng-container>
+  <ng-template #adminBottomNav>
+    <a routerLink="/admin" routerLinkActive="active" class="bottom-link"><span>Administração</span></a>
+  </ng-template>
+  <button class="bottom-link" (click)="logout()"><span>Sair</span></button>
+</nav>

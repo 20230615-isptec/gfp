@@ -1,0 +1,94 @@
+<div class="categorias-container">
+  <div class="categorias-header">
+    <div>
+      <h2>Categorias</h2>
+      <p>Organize receitas e despesas com etiquetas claras</p>
+    </div>
+
+    <div class="header-actions">
+      <button
+        class="btn-primary"
+        (click)="toggleFormulario()"
+        [disabled]="isLoading">
+        <span *ngIf="!mostrarForm">+ Nova Categoria</span>
+        <span *ngIf="mostrarForm">Fechar</span>
+      </button>
+    </div>
+  </div>
+
+  <div *ngIf="hasError" class="alert-error">
+    <strong>Erro:</strong> {{ errorMessage }}
+    <button class="alert-close" (click)="hasError = false">X</button>
+  </div>
+
+  <div *ngIf="isLoading" class="loading-container">
+    <div class="spinner"></div>
+    <p>Carregando categorias...</p>
+  </div>
+
+  <div *ngIf="!isLoading && categorias.length === 0 && !mostrarForm" class="empty-state">
+    <div class="empty-icon">Sem categorias</div>
+    <h3>Nenhuma categoria registada</h3>
+    <p>Precisa de pelo menos uma categoria criada para classificar as transações.</p>
+    <button class="btn-primary" (click)="toggleFormulario()">+ Criar Categoria</button>
+  </div>
+
+  <section *ngIf="!isLoading && categorias.length > 0 && !mostrarForm" class="categoria-lista">
+    <article *ngFor="let cat of categorias" class="categoria-item" [class.receita-item]="cat.tipo === 'receita'" [class.despesa-item]="cat.tipo === 'despesa'">
+      <div class="item-left">
+        <div class="cat-icon" [class.receita]="cat.tipo === 'receita'" [class.despesa]="cat.tipo === 'despesa'">
+          <span *ngIf="cat.tipo === 'receita'">R</span>
+          <span *ngIf="cat.tipo === 'despesa'">D</span>
+        </div>
+
+        <div class="item-info">
+          <strong>{{ cat.nome }}</strong>
+          <span class="cat-badge" [class.receita]="cat.tipo === 'receita'" [class.despesa]="cat.tipo === 'despesa'">
+            {{ cat.tipo === 'receita' ? 'Receita' : 'Despesa' }}
+          </span>
+        </div>
+      </div>
+
+      <div class="item-actions">
+        <button class="icon-btn" (click)="editar(cat)" title="Editar">Editar</button>
+        <button class="icon-btn danger" (click)="deletar(cat)" title="Apagar">Eliminar</button>
+      </div>
+    </article>
+  </section>
+
+  <div class="modal-backdrop" *ngIf="mostrarForm" (click)="cancelar()">
+    <div class="modal-card" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h3>{{ getTituloFormulario() }}</h3>
+        <button type="button" class="icon-btn" (click)="cancelar()">X</button>
+      </div>
+
+      <form [formGroup]="categoriaForm" (ngSubmit)="salvar()" class="categoria-form">
+        <div class="form-group">
+          <label for="nome">Nome da categoria</label>
+          <input id="nome" type="text" formControlName="nome" class="form-control" placeholder="Ex: Alimentação" />
+        </div>
+
+        <div class="form-group">
+          <label>Tipo</label>
+          <div class="tipo-options">
+            <label class="pill-option receita">
+              <input type="radio" value="receita" formControlName="tipo" /> Receita
+            </label>
+            <label class="pill-option despesa">
+              <input type="radio" value="despesa" formControlName="tipo" /> Despesa
+            </label>
+          </div>
+        </div>
+
+        <div class="form-actions">
+          <button type="button" class="btn-secondary" (click)="cancelar()" [disabled]="isSaving">Cancelar</button>
+          <button type="submit" class="btn-primary" [disabled]="!categoriaForm.valid || isSaving">
+            <span *ngIf="!isSaving">{{ getTextoBotaoSalvar() }}</span>
+            <span *ngIf="isSaving">Guardando...</span>
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>

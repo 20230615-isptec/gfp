@@ -1,0 +1,377 @@
+// ========================================================================
+// ESTILOS GLOBAIS DO APP COMPONENT
+// ========================================================================
+
+:host {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.main-content {
+  margin-left: 264px;
+  margin-top: 84px;
+  min-height: calc(100vh - 84px);
+  width: calc(100% - 264px);
+}
+
+/* Em tablets e mobile, remove o margin-left */
+@media (max-width: 1024px) {
+  .main-content {
+    margin-left: 0;
+    width: 100%;
+  }
+}
+
+// ========================================================================
+// CORES GLOBAIS
+// ========================================================================
+
+:root {
+  // Cores do tema claro
+  --primary-color: #2563eb;
+  --primary-dark: #1e40af;
+  --primary-light: #3b82f6;
+  
+  --success-color: #10b981;
+  --success-light: #d1fae5;
+  --success-dark: #047857;
+  
+  --error-color: #ef4444;
+  --error-light: #fee2e2;
+  --error-dark: #dc2626;
+  
+  --warning-color: #f59e0b;
+  --warning-light: #fef3c7;
+  
+  --bg-light: #ffffff;
+  --bg-light-secondary: #f9fafb;
+  --bg-light-tertiary: #f3f4f6;
+  
+  --bg-dark: #1f2937;
+  --bg-dark-secondary: #111827;
+  --bg-dark-tertiary: #374151;
+
+  /* Aliases para componentes que usam nomes diferentes */
+  --card-bg: var(--bg-light);
+  --card-bg-dark: var(--bg-dark-tertiary);
+  --bg-page: var(--bg-light);
+  --background-color: var(--bg-light);
+  
+  --text-light: #1f2937;
+  --text-light-muted: #6b7280;
+  
+  --text-dark: #f3f4f6;
+  --text-dark-muted: #9ca3af;
+  
+  --border-light: #e5e7eb;
+  --border-dark: #374151;
+  
+  --shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.1);
+  --shadow-lg: 0 10px 25px rgba(0, 0, 0, 0.1);
+}
+
+// ========================================================================
+// RESET E ESTILOS GLOBAIS
+// ========================================================================
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+  color-scheme: light;
+}
+
+html.dark-mode {
+  color-scheme: dark;
+}
+
+/* Quando o modo escuro está ativo, sobrescreve variáveis usadas pelos componentes */
+html.dark-mode, body.dark-mode {
+  --card-bg: var(--card-bg-dark);
+  --bg-page: var(--bg-dark);
+  --background-color: var(--bg-dark);
+  --text-light: var(--text-dark);
+  --text-light-muted: var(--text-dark-muted);
+  --border-light: var(--border-dark);
+  --bg-light-secondary: var(--bg-dark-secondary);
+  --bg-light-tertiary: var(--bg-dark-tertiary);
+  --success-light: rgba(4, 120, 87, 0.18);
+  --error-light: rgba(220, 38, 38, 0.18);
+  --warning-light: rgba(245, 158, 11, 0.18);
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  background-color: var(--bg-light);
+  color: var(--text-light);
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+body.dark-mode {
+  background-color: var(--bg-dark);
+  color: var(--text-dark);
+}
+
+// ========================================================================
+// LINKS
+// ========================================================================
+
+a {
+  color: var(--primary-color);
+  text-decoration: none;
+  transition: color 0.3s ease;
+
+  &:hover {
+    color: var(--primary-dark);
+  }
+
+  body.dark-mode & {
+    color: var(--primary-light);
+
+    &:hover {
+      color: var(--primary-color);
+    }
+  }
+}
+
+// ========================================================================
+// BUTTONS
+// ========================================================================
+
+button {
+  font-family: inherit;
+  font-size: inherit;
+  transition: all 0.3s ease;
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+}
+
+// ========================================================================
+// INPUTS
+// ========================================================================
+
+input,
+textarea,
+select {
+  font-family: inherit;
+  font-size: inherit;
+  color: var(--text-light);
+  background-color: var(--bg-light);
+  border: 1px solid var(--border-light);
+
+  &::placeholder {
+    color: var(--text-light-muted);
+    opacity: 1;
+  }
+
+  body.dark-mode & {
+    color: var(--text-dark);
+    background-color: var(--bg-dark-secondary);
+    border-color: var(--border-dark);
+
+    &::placeholder {
+      color: var(--text-dark-muted);
+      opacity: 1;
+    }
+  }
+
+  &:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+}
+
+/* Estilo base para controles de formulário para garantir contraste consistente */
+.form-control {
+  background: var(--bg-light-tertiary);
+  color: var(--text-light);
+  border: 1px solid var(--border-light);
+
+  body.dark-mode & {
+    background: var(--bg-dark-tertiary);
+    color: var(--text-dark);
+    border-color: var(--border-dark);
+  }
+
+  &::placeholder {
+    color: var(--text-light-muted);
+    opacity: 1;
+  }
+
+  body.dark-mode & {
+    &::placeholder { color: var(--text-dark-muted); opacity: 1; }
+  }
+}
+
+// ========================================================================
+// SCROLLBAR
+// ========================================================================
+
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background-color: var(--bg-light-secondary);
+
+  body.dark-mode & {
+    background-color: var(--bg-dark-secondary);
+  }
+}
+
+::-webkit-scrollbar-thumb {
+  background-color: var(--border-light);
+  border-radius: 5px;
+
+  body.dark-mode & {
+    background-color: var(--border-dark);
+  }
+
+  &:hover {
+    background-color: var(--primary-color);
+  }
+}
+
+// ========================================================================
+// TABELAS
+// ========================================================================
+
+table {
+  border-collapse: collapse;
+  width: 100%;
+}
+
+th {
+  background-color: var(--bg-light-secondary);
+  color: var(--text-light);
+  font-weight: 700;
+  text-align: left;
+  padding: 1rem;
+  border-bottom: 2px solid var(--border-light);
+
+  body.dark-mode & {
+    background-color: var(--bg-dark-tertiary);
+    color: var(--text-dark);
+    border-bottom-color: var(--border-dark);
+  }
+}
+
+td {
+  padding: 1rem;
+  border-bottom: 1px solid var(--border-light);
+
+  body.dark-mode & {
+    border-bottom-color: var(--border-dark);
+  }
+}
+
+tr:hover {
+  background-color: var(--bg-light-secondary);
+
+  body.dark-mode & {
+    background-color: var(--bg-dark-tertiary);
+  }
+}
+
+// ========================================================================
+// UTILITY CLASSES
+// ========================================================================
+
+.container {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 0 1rem;
+}
+
+.text-center {
+  text-align: center;
+}
+
+.text-right {
+  text-align: right;
+}
+
+.text-left {
+  text-align: left;
+}
+
+.mt-1 { margin-top: 0.5rem; }
+.mt-2 { margin-top: 1rem; }
+.mt-3 { margin-top: 1.5rem; }
+.mt-4 { margin-top: 2rem; }
+
+.mb-1 { margin-bottom: 0.5rem; }
+.mb-2 { margin-bottom: 1rem; }
+.mb-3 { margin-bottom: 1.5rem; }
+.mb-4 { margin-bottom: 2rem; }
+
+.p-1 { padding: 0.5rem; }
+.p-2 { padding: 1rem; }
+.p-3 { padding: 1.5rem; }
+.p-4 { padding: 2rem; }
+
+.hidden {
+  display: none !important;
+}
+
+.invisible {
+  visibility: hidden;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
+}
+
+// ========================================================================
+// RESPONSIVE UTILITIES
+// ========================================================================
+
+@media (max-width: 768px) {
+  body {
+    font-size: 14px;
+  }
+
+  table {
+    font-size: 12px;
+  }
+
+  th, td {
+    padding: 0.75rem;
+  }
+}
+
+@media (max-width: 576px) {
+  .container {
+    padding: 0 0.75rem;
+  }
+}

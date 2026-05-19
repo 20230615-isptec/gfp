@@ -1,0 +1,53 @@
+# ========================================================================
+# Configuração de Reescrita de URLs - API RESTful
+# ========================================================================
+
+# Ativar o módulo de reescrita (mod_rewrite)
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    
+   # Define o diretório base relativo correto para o XAMPP
+    RewriteBase /gfp/backend/
+    
+    # Passar o Authorization header para PHP
+    # Apache remove por padrão - precisa ser repassado explicitamente
+    RewriteCond %{HTTP:Authorization} ^(.*)$
+    RewriteRule ^(.*)$ - [E=HTTP_AUTHORIZATION:%1]
+    
+    # NÃO reescrever se for um arquivo físico existente
+    RewriteCond %{REQUEST_FILENAME} !-f
+    
+    # NÃO reescrever se for um diretório existente
+    RewriteCond %{REQUEST_FILENAME} !-d
+    
+    # Reescrever todas as requisições para index.php
+    # Mantém query string original com [QSA] (Query String Append)
+    RewriteRule ^(.*)$ index.php [QSA,L]
+</IfModule>
+
+# ========================================================================
+# Configurações de Headers e Segurança
+# ========================================================================
+
+# Desabilitar caching para API (Respostas dinâmicas)
+<IfModule mod_headers.c>
+    Header set Cache-Control "no-cache, no-store, must-revalidate"
+    Header set Pragma "no-cache"
+    Header set Expires 0
+    
+    # Prevenir content sniffing
+    Header set X-Content-Type-Options "nosniff"
+    
+    # Impedir frameborder (clickjacking)
+    Header set X-Frame-Options "DENY"
+</IfModule>
+
+# ========================================================================
+# Configurações de Compressão (Otimização)
+# ========================================================================
+
+# Ativar compressão gzip para arquivos de texto
+<IfModule mod_deflate.c>
+    AddOutputFilterByType DEFLATE application/json
+    AddOutputFilterByType DEFLATE text/plain
+</IfModule>

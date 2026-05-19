@@ -1,0 +1,78 @@
+<div class="admin-container">
+  <div *ngIf="isLoading" class="loading">
+    <div class="spinner"></div>
+  </div>
+
+  <div *ngIf="!isLoading && (isAdmin$ | async)" class="admin-content">
+    <div class="admin-header">
+      <div>
+        <h1>Gestão de Utilizadores</h1>
+        <p>Apenas o administrador pode gerir os utilizadores do sistema.</p>
+      </div>
+      <button class="btn btn-primary" type="button" (click)="carregarUtilizadores()">Atualizar</button>
+    </div>
+
+    <div *ngIf="hasError" class="alert-error">
+      <strong>Erro:</strong> {{ errorMessage }}
+    </div>
+
+    <div *ngIf="!hasError" class="admin-body">
+      <div class="admin-grid">
+        <div class="admin-card">
+          <h3>Total de Utilizadores</h3>
+          <p>{{ usuarios.length }}</p>
+        </div>
+      </div>
+
+      <div *ngIf="usuarios.length > 0; else semUsuarios" class="user-table-wrapper">
+        <table class="user-table">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Nome</th>
+              <th>Email</th>
+              <th>Tipo</th>
+              <th>Criado em</th>
+              <th>Ações</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let usuario of usuarios">
+              <td>{{ usuario.id }}</td>
+              <td>{{ usuario.nome }}</td>
+              <td>{{ usuario.email }}</td>
+              <td>
+                <span class="tipo-badge" [class.admin]="usuario.tipo_usuario_id === 1">
+                  {{ getTipoUsuario(usuario.tipo_usuario_id) }}
+                </span>
+              </td>
+              <td>{{ formatarData(usuario.criado_em) }}</td>
+              <td class="actions-cell">
+                <button 
+                  class="btn-action btn-tipo"
+                  [disabled]="acaoEmProgresso['alterar-tipo-' + usuario.id] || usuario.id === adminLogado"
+                  (click)="alternarTipo(usuario)"
+                  title="Alterar tipo de utilizador">
+                  {{ usuario.tipo_usuario_id === 1 ? 'Remover Admin' : 'Tornar Admin' }}
+                </button>
+                <button 
+                  class="btn-action btn-delete"
+                  [disabled]="acaoEmProgresso['eliminar-' + usuario.id] || usuario.id === adminLogado"
+                  (click)="eliminarUtilizador(usuario)"
+                  title="Eliminar utilizador">
+                  Eliminar
+                </button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <ng-template #semUsuarios>
+        <div class="empty-state">
+          <p>Nenhum utilizador encontrado.</p>
+        </div>
+      </ng-template>
+    </div>
+  </div>
+</div>

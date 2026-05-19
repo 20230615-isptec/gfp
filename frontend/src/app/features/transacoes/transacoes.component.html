@@ -1,0 +1,130 @@
+<div class="transacoes-container">
+  <div class="transacoes-header">
+    <div>
+      <h2>Transações</h2>
+      <p>Seu extrato financeiro em tempo real</p>
+    </div>
+
+    <div class="header-actions">
+      <button
+        class="btn-outline"
+        (click)="exportarRelatorio()"
+        [disabled]="isLoading || isExporting">
+        <span *ngIf="!isExporting">Exportar Relatório</span>
+        <span *ngIf="isExporting">Exportando...</span>
+      </button>
+
+      <button
+        class="btn-primary"
+        (click)="toggleFormulario()"
+        [disabled]="isLoading">
+        <span *ngIf="!mostrarForm">+ Nova Transação</span>
+        <span *ngIf="mostrarForm">Fechar</span>
+      </button>
+    </div>
+  </div>
+
+  <div *ngIf="hasError" class="alert-error">
+    <strong>Erro:</strong> {{ errorMessage }}
+    <button class="alert-close" (click)="hasError = false">X</button>
+  </div>
+
+  <div *ngIf="isLoading" class="loading-container">
+    <div class="spinner"></div>
+    <p>Carregando transações...</p>
+  </div>
+
+  <div *ngIf="!isLoading && transacoes.length === 0 && !mostrarForm" class="empty-state">
+    <div class="empty-icon">Sem dados</div>
+    <h3>Não foram encontradas transações para este utilizador.</h3>
+    <p>Registe a primeira movimentação para iniciar o seu histórico financeiro.</p>
+    <button class="btn-primary" (click)="toggleFormulario()">+ Registar Primeira Transação</button>
+  </div>
+
+  <section *ngIf="!isLoading && transacoes.length > 0 && !mostrarForm" class="extrato-lista">
+    <article class="extrato-item" *ngFor="let t of transacoes" [class.tipo-receita]="t.tipo === 'receita'" [class.tipo-despesa]="t.tipo === 'despesa'">
+      <div class="item-left">
+        <div class="tipo-indicador" [class.receita]="t.tipo === 'receita'" [class.despesa]="t.tipo === 'despesa'">
+          <span *ngIf="t.tipo === 'receita'">R</span>
+          <span *ngIf="t.tipo === 'despesa'">D</span>
+        </div>
+
+        <div class="item-info">
+          <strong>{{ t.descricao }}</strong>
+          <div class="item-subinfo">
+            <span>{{ formatarData(t.data) }}</span>
+            <span class="dot">•</span>
+            <span>{{ obterNomeCategoria(t.categoria_id) }}</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="item-right">
+        <div class="valor" [class.receita]="t.tipo === 'receita'" [class.despesa]="t.tipo === 'despesa'">
+          {{ t.tipo === 'receita' ? '+' : '-' }} {{ formatarValor(t.valor) }}
+        </div>
+
+        <div class="item-actions">
+          <button class="icon-btn" (click)="editar(t)" title="Editar">Editar</button>
+          <button class="icon-btn danger" (click)="deletar(t)" title="Apagar">Eliminar</button>
+        </div>
+      </div>
+    </article>
+  </section>
+
+  <div class="modal-backdrop" *ngIf="mostrarForm" (click)="cancelar()">
+    <div class="modal-card" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h3>{{ getTituloFormulario() }}</h3>
+        <button type="button" class="icon-btn" (click)="cancelar()">X</button>
+      </div>
+
+      <form [formGroup]="transacaoForm" (ngSubmit)="salvar()" class="transacao-form">
+        <div class="form-group">
+          <label for="categoria_id">Categoria</label>
+          <select id="categoria_id" formControlName="categoria_id" class="form-control">
+            <option value="">Selecione uma categoria</option>
+            <option *ngFor="let cat of categorias" [value]="cat.id">{{ cat.nome }}</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label>Tipo</label>
+          <div class="tipo-options">
+            <label class="pill-option receita">
+              <input type="radio" value="receita" formControlName="tipo" /> Receita
+            </label>
+            <label class="pill-option despesa">
+              <input type="radio" value="despesa" formControlName="tipo" /> Despesa
+            </label>
+          </div>
+        </div>
+
+        <div class="form-grid">
+          <div class="form-group">
+            <label for="valor">Valor (€)</label>
+            <input id="valor" type="number" formControlName="valor" step="0.01" min="0" class="form-control" placeholder="0.00" />
+          </div>
+
+          <div class="form-group">
+            <label for="data">Data</label>
+            <input id="data" type="date" formControlName="data" class="form-control" />
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="descricao">Descrição</label>
+          <textarea id="descricao" formControlName="descricao" rows="3" class="form-control" placeholder="Descrição da movimentação"></textarea>
+        </div>
+
+        <div class="form-actions">
+          <button type="button" class="btn-secondary" (click)="cancelar()" [disabled]="isSaving">Cancelar</button>
+          <button type="submit" class="btn-primary" [disabled]="!transacaoForm.valid || isSaving">
+            <span *ngIf="!isSaving">{{ getTextoBotaoSalvar() }}</span>
+            <span *ngIf="isSaving">Guardando...</span>
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
