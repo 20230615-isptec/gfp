@@ -1,7 +1,7 @@
 {
   "name": "finansmart-frontend",
   "version": "1.0.0",
-  "description": "FinanSmart - Gestão Financeira Pessoal",
+  "description": "FinanSmart Frontend",
   "scripts": {
     "ng": "ng",
     "start": "ng serve",

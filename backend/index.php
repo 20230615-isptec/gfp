@@ -236,6 +236,11 @@ class Router
             $uri = substr($uri, strlen('/' . $currentDir));
         }
 
+        // Suporta chamadas com /index.php no caminho (fallback sem mod_rewrite)
+        if (str_starts_with($uri, '/index.php')) {
+            $uri = substr($uri, strlen('/index.php'));
+        }
+
         // Se URI está vazia, defina como raiz
         if (empty($uri)) {
             $uri = '/';

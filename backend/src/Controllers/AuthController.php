@@ -288,7 +288,7 @@ class AuthController
         } catch (\Exception $e) {
             error_log('Erro ao solicitar recuperaÃ§Ã£o de senha: ' . $e->getMessage());
 
-            http_response_code(404);
+            http_response_code(500);
             echo json_encode([
                 'success' => false,
                 'message' => $e->getMessage()

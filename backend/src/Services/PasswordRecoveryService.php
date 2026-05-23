@@ -11,7 +11,6 @@ class PasswordRecoveryService
     private UsuarioRepository $usuarioRepository;
     private SmtpMailer $mailer;
     private const TOKEN_EXPIRATION = 3600;
-    private const RESET_URL_BASE = 'http://localhost:4200/reset-password';
 
     public function __construct(UsuarioRepository $usuarioRepository, SmtpMailer $mailer)
     {
@@ -87,7 +86,8 @@ class PasswordRecoveryService
 
     private function enviarEmailRecuperacao(string $email, string $token): void
     {
-        $link = self::RESET_URL_BASE . '?token=' . urlencode($token);
+        $frontendBase = defined('FRONTEND_URL') ? rtrim((string) FRONTEND_URL, '/') : 'http://localhost:4200';
+        $link = $frontendBase . '/reset-password?token=' . urlencode($token);
         $subject = 'Recuperacao de senha - FinanSmart';
         $message = "Ola,\n\nRecebemos uma solicitacao de recuperacao de senha.\n";
         $message .= "Use este link para redefinir sua senha (expira em 1 hora):\n$link\n\n";
@@ -98,6 +98,7 @@ class PasswordRecoveryService
             error_log('[PasswordRecovery] SMTP enviado com sucesso para ' . $email);
         } catch (\Throwable $e) {
             error_log('[PasswordRecovery] Falha SMTP para ' . $email . ': ' . $e->getMessage() . ' | Link fallback: ' . $link);
+            throw new \Exception('Falha ao enviar email de recuperacao. Verifique a configuracao SMTP.');
         }
     }
 }

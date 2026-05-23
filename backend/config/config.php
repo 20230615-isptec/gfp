@@ -19,8 +19,12 @@ define('JWT_EXPIRATION', 3600);
 
 define('ALLOWED_ORIGINS', [
     'http://localhost:4200',
+    'http://localhost:53031',
     'http://localhost:3000'
 ]);
+
+// URL publica do frontend para links de recuperacao de senha
+define('FRONTEND_URL', 'http://localhost:4200');
 
 define('DEBUG_MODE', true);
 

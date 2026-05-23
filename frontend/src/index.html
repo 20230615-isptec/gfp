@@ -1,15 +1,53 @@
 <!doctype html>
-<html lang="pt-PT">
-<head>
-  <meta charset="utf-8">
-  <title>FinanSmart - Gestão Financeira Pessoal</title>
-  <base href="/">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="theme-color" content="#2563eb">
-  <meta name="description" content="FinanSmart - Aplicação de Gestão Financeira Pessoal">
-  <link rel="icon" type="image/x-icon" href="favicon.ico">
-</head>
-<body>
-  <app-root></app-root>
-</body>
+<html lang="pt" class="dark">
+  <head>
+    <meta charset="utf-8" />
+    <title>FinanSmart</title>
+    <base href="/" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="icon" type="image/x-icon" href="favicon.ico" />
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet" />
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        darkMode: 'class',
+        theme: {
+          extend: {
+            colors: {
+              'deep-navy': '#020617',
+              'slate-800': '#1E293B',
+              'emerald-glow': '#34D399',
+              'indigo-soft': '#818CF8',
+              'danger-red': '#EF4444',
+              'surface': '#101415',
+              'surface-container': '#1d2022',
+              'surface-container-high': '#272a2c',
+              'surface-container-highest': '#323537',
+              'on-surface': '#e0e3e5',
+              'on-surface-variant': '#bbcabf',
+              'outline-variant': '#3c4a42',
+              'primary': '#4edea3',
+              'on-primary': '#003824',
+              'on-primary-fixed-variant': '#005236',
+              'primary-fixed-dim': '#4edea3'
+            },
+            fontFamily: {
+              body: ['Plus Jakarta Sans', 'system-ui', 'sans-serif'],
+              headline: ['Plus Jakarta Sans', 'system-ui', 'sans-serif'],
+              label: ['Plus Jakarta Sans', 'system-ui', 'sans-serif'],
+              data: ['JetBrains Mono', 'ui-monospace', 'monospace']
+            }
+          }
+        }
+      }
+    </script>
+  </head>
+  <body class="bg-deep-navy text-on-surface font-body antialiased overflow-x-hidden selection:bg-primary/30 selection:text-primary">
+    <app-root></app-root>
+  </body>
 </html>

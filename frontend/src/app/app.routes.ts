@@ -1,50 +1,31 @@
 import { Routes } from '@angular/router';
-import { authGuard } from './core/guards/auth.guard';
+import { LoginComponent } from './features/auth/login.component';
+import { RegisterComponent } from './features/auth/register.component';
+import { ForgotPasswordComponent } from './features/auth/forgot-password.component';
+import { ResetPasswordComponent } from './features/auth/reset-password.component';
+import { LayoutComponent } from './layout/layout.component';
+import { DashboardComponent } from './features/dashboard/dashboard.component';
+import { TransactionsComponent } from './features/transactions/transactions.component';
+import { CategoriesComponent } from './features/categories/categories.component';
+import { AdminComponent } from './features/admin/admin.component';
+import { authGuard, adminGuard, guestGuard } from './core/auth.guard';
 
 export const routes: Routes = [
+  { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
+  { path: 'login', component: LoginComponent, canActivate: [guestGuard] },
+  { path: 'register', component: RegisterComponent, canActivate: [guestGuard] },
+  { path: 'forgot-password', component: ForgotPasswordComponent, canActivate: [guestGuard] },
+  { path: 'reset-password', component: ResetPasswordComponent, canActivate: [guestGuard] },
   {
     path: '',
-    redirectTo: '/dashboard',
-    pathMatch: 'full'
+    component: LayoutComponent,
+    canActivate: [authGuard],
+    children: [
+      { path: 'dashboard', component: DashboardComponent },
+      { path: 'transacoes', component: TransactionsComponent },
+      { path: 'categorias', component: CategoriesComponent },
+      { path: 'admin', component: AdminComponent, canActivate: [adminGuard] }
+    ]
   },
-  {
-    path: 'login',
-    loadComponent: () => import('./features/auth/login/login.component').then(m => m.LoginComponent)
-  },
-  {
-    path: 'register',
-    loadComponent: () => import('./features/auth/register/register.component').then(m => m.RegisterComponent)
-  },
-  {
-    path: 'forgot-password',
-    loadComponent: () => import('./features/auth/forgot-password/forgot-password.component').then(m => m.ForgotPasswordComponent)
-  },
-  {
-    path: 'reset-password',
-    loadComponent: () => import('./features/auth/reset-password/reset-password.component').then(m => m.ResetPasswordComponent)
-  },
-  {
-    path: 'dashboard',
-    loadComponent: () => import('./features/dashboard/dashboard.component').then(m => m.DashboardComponent),
-    canActivate: [authGuard]
-  },
-  {
-    path: 'transacoes',
-    loadComponent: () => import('./features/transacoes/transacoes.component').then(m => m.TransacoesComponent),
-    canActivate: [authGuard]
-  },
-  {
-    path: 'categorias',
-    loadComponent: () => import('./features/categorias/categorias.component').then(m => m.CategoriasComponent),
-    canActivate: [authGuard]
-  },
-  {
-    path: 'admin',
-    loadComponent: () => import('./features/admin/admin.component').then(m => m.AdminComponent),
-    canActivate: [authGuard]
-  },
-  {
-    path: '**',
-    redirectTo: '/dashboard'
-  }
+  { path: '**', redirectTo: 'dashboard' }
 ];

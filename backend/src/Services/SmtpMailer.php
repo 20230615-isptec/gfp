@@ -34,7 +34,16 @@ class SmtpMailer
     public function send(string $to, string $subject, string $body): bool
     {
         $remoteHost = $this->secure === 'ssl' ? 'ssl://' . $this->host : $this->host;
-        $socket = @stream_socket_client($remoteHost . ':' . $this->port, $errno, $errstr, 15);
+        
+        $context = stream_context_create([
+            'ssl' => [
+                'verify_peer' => false,
+                'verify_peer_name' => false,
+                'allow_self_signed' => true
+            ]
+        ]);
+        
+        $socket = @stream_socket_client($remoteHost . ':' . $this->port, $errno, $errstr, 15, STREAM_CLIENT_CONNECT, $context);
         if (!$socket) {
             throw new \Exception('Falha conexao SMTP: ' . $errstr);
         }
