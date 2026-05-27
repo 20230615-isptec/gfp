@@ -331,5 +331,73 @@ class TransacaoRepository
             throw new PDOException('Erro ao atualizar transação: ' . $e->getMessage(), 0, $e);
         }
     }
+
+    /**
+     * Retorna gastos agregados por categoria para um mês/ano.
+     *
+     * @param int $utilizadorId
+     * @param int $mes
+     * @param int $ano
+     * @return array<int, array<string, mixed>>
+     */
+    public function getGastosPorCategoria(int $utilizadorId, int $mes, int $ano): array
+    {
+        try {
+            $query = 'SELECT t.categoria_id,
+                             c.nome AS categoria_nome,
+                             COALESCE(SUM(t.valor), 0) AS total_gasto
+                      FROM transacoes t
+                      INNER JOIN categorias c ON c.id = t.categoria_id
+                      WHERE t.utilizador_id = :utilizador_id
+                        AND t.tipo = :tipo
+                        AND MONTH(t.data) = :mes
+                        AND YEAR(t.data) = :ano
+                      GROUP BY t.categoria_id, c.nome
+                      ORDER BY total_gasto DESC';
+
+            $stmt = $this->pdo->prepare($query);
+            $stmt->execute([
+                ':utilizador_id' => $utilizadorId,
+                ':tipo' => 'despesa',
+                ':mes' => $mes,
+                ':ano' => $ano
+            ]);
+
+            return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        } catch (PDOException $e) {
+            error_log('Erro ao obter gastos por categoria: ' . $e->getMessage());
+            throw new PDOException('Erro ao obter gastos por categoria: ' . $e->getMessage(), 0, $e);
+        }
+    }
+
+    /**
+     * Retorna histórico de receitas e despesas dos últimos 6 meses.
+     *
+     * @param int $utilizadorId
+     * @return array<int, array<string, mixed>>
+     */
+    public function getHistoricoSeisMeses(int $utilizadorId): array
+    {
+        try {
+            $query = 'SELECT YEAR(t.data) AS ano,
+                             MONTH(t.data) AS mes,
+                             COALESCE(SUM(CASE WHEN t.tipo = "receita" THEN t.valor ELSE 0 END), 0) AS total_receitas,
+                             COALESCE(SUM(CASE WHEN t.tipo = "despesa" THEN t.valor ELSE 0 END), 0) AS total_despesas
+                      FROM transacoes t
+                      WHERE t.utilizador_id = :utilizador_id
+                        AND t.data >= DATE_FORMAT(DATE_SUB(CURDATE(), INTERVAL 5 MONTH), "%Y-%m-01")
+                        AND t.data < DATE_FORMAT(DATE_ADD(CURDATE(), INTERVAL 1 MONTH), "%Y-%m-01")
+                      GROUP BY YEAR(t.data), MONTH(t.data)
+                      ORDER BY YEAR(t.data) ASC, MONTH(t.data) ASC';
+
+            $stmt = $this->pdo->prepare($query);
+            $stmt->execute([':utilizador_id' => $utilizadorId]);
+
+            return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        } catch (PDOException $e) {
+            error_log('Erro ao obter histórico de seis meses: ' . $e->getMessage());
+            throw new PDOException('Erro ao obter histórico de seis meses: ' . $e->getMessage(), 0, $e);
+        }
+    }
 }
 ?>

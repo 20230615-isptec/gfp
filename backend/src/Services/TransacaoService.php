@@ -4,6 +4,8 @@ declare(strict_types=1);
 namespace Src\Services;
 
 use Src\Models\Transacao;
+use Src\Repositories\CategoriaRepository;
+use Src\Repositories\MetaFinanceiraRepository;
 use Src\Repositories\TransacaoRepository;
 
 /**
@@ -23,15 +25,29 @@ class TransacaoService
      * @var TransacaoRepository
      */
     private TransacaoRepository $transacaoRepository;
+    private OrcamentoService $orcamentoService;
+    private NotificacaoService $notificacaoService;
+    private MetaFinanceiraRepository $metaFinanceiraRepository;
+    private CategoriaRepository $categoriaRepository;
 
     /**
      * Construtor - Injeção de Dependência
      * 
      * @param TransacaoRepository $transacaoRepository
      */
-    public function __construct(TransacaoRepository $transacaoRepository)
+    public function __construct(
+        TransacaoRepository $transacaoRepository,
+        OrcamentoService $orcamentoService,
+        NotificacaoService $notificacaoService,
+        MetaFinanceiraRepository $metaFinanceiraRepository,
+        CategoriaRepository $categoriaRepository
+    )
     {
         $this->transacaoRepository = $transacaoRepository;
+        $this->orcamentoService = $orcamentoService;
+        $this->notificacaoService = $notificacaoService;
+        $this->metaFinanceiraRepository = $metaFinanceiraRepository;
+        $this->categoriaRepository = $categoriaRepository;
     }
 
     /**
@@ -46,6 +62,7 @@ class TransacaoService
     {
         try {
             $transacoes = $this->transacaoRepository->findByUser($utilizadorId);
+            $movimentosMetas = $this->metaFinanceiraRepository->listarMovimentosPorUtilizador($utilizadorId);
 
             $transacoesFormatadas = array_map(function (Transacao $transacao) {
                 return [
@@ -59,6 +76,26 @@ class TransacaoService
                     'criado_em' => $transacao->getCriadoEm()
                 ];
             }, $transacoes);
+
+            foreach ($movimentosMetas as $movimento) {
+                $transacoesFormatadas[] = [
+                    'id' => 'meta-' . (int)$movimento['id'],
+                    'utilizador_id' => (int)$movimento['utilizador_id'],
+                    'categoria_id' => null,
+                    'valor' => (float)$movimento['valor'],
+                    'tipo' => 'poupanca',
+                    'data' => substr((string)$movimento['criado_em'], 0, 10),
+                    'descricao' => (string)$movimento['descricao'],
+                    'criado_em' => (string)$movimento['criado_em'],
+                    'meta_id' => (int)$movimento['meta_id'],
+                    'meta_titulo' => (string)$movimento['meta_titulo'],
+                    'bloqueado' => true
+                ];
+            }
+
+            usort($transacoesFormatadas, static function (array $a, array $b): int {
+                return strcmp((string)($b['criado_em'] ?? $b['data']), (string)($a['criado_em'] ?? $a['data']));
+            });
 
             return $transacoesFormatadas;
         } catch (\Exception $e) {
@@ -97,6 +134,10 @@ class TransacaoService
                 throw new \Exception('Valor deve ser maior que zero');
             }
 
+            if (!$this->categoriaRepository->belongsToUser($categoriaId, $utilizadorId)) {
+                throw new \Exception('Categoria inválida para este utilizador');
+            }
+
             if ($tipo !== 'receita' && $tipo !== 'despesa') {
                 throw new \Exception('Tipo deve ser "receita" ou "despesa"');
             }
@@ -111,6 +152,19 @@ class TransacaoService
             }
 
             $descricao = trim($descricao);
+            if ($descricao === '') {
+                throw new \Exception('Descrição é obrigatória');
+            }
+
+            if ($tipo === 'despesa') {
+                $saldoDisponivel = $this->calcularSaldoDisponivel($utilizadorId);
+                if ($valor > $saldoDisponivel) {
+                    throw new \Exception(sprintf(
+                        'Saldo insuficiente. Disponivel para gastar: %.2f. O dinheiro reservado nas metas esta protegido.',
+                        $saldoDisponivel
+                    ));
+                }
+            }
 
             $transacao = new Transacao(
                 utilizadorId: $utilizadorId,
@@ -125,6 +179,11 @@ class TransacaoService
 
             if (!$resultado) {
                 throw new \Exception('Erro ao criar transação na base de dados');
+            }
+
+            // Gatilho de alerta financeiro: após inserir despesa, verifica consumo de orçamento.
+            if ($tipo === 'despesa') {
+                $this->avaliarAlertaOrcamento($utilizadorId, $categoriaId, $data);
             }
 
             return true;
@@ -194,6 +253,10 @@ class TransacaoService
                 throw new \Exception('Valor deve ser maior que zero');
             }
 
+            if (!$this->categoriaRepository->belongsToUser($categoriaId, $utilizadorId)) {
+                throw new \Exception('Categoria inválida para este utilizador');
+            }
+
             if ($tipo !== 'receita' && $tipo !== 'despesa') {
                 throw new \Exception('Tipo deve ser "receita" ou "despesa"');
             }
@@ -208,6 +271,24 @@ class TransacaoService
             }
 
             $descricao = trim($descricao);
+            if ($descricao === '') {
+                throw new \Exception('Descrição é obrigatória');
+            }
+
+            $transacaoAtual = $this->transacaoRepository->findById($id);
+            if ($transacaoAtual === null || $transacaoAtual->getUtilizadorId() !== $utilizadorId) {
+                throw new \Exception('Transação não encontrada ou você não tem permissão para editá-la');
+            }
+
+            if ($tipo === 'despesa') {
+                $saldoDisponivel = $this->calcularSaldoDisponivel($utilizadorId, $id);
+                if ($valor > $saldoDisponivel) {
+                    throw new \Exception(sprintf(
+                        'Saldo insuficiente. Disponivel para gastar: %.2f. A edição não pode criar dívida.',
+                        $saldoDisponivel
+                    ));
+                }
+            }
 
             $resultado = $this->transacaoRepository->update(
                 $id,
@@ -228,6 +309,61 @@ class TransacaoService
             error_log('Erro ao editar transação: ' . $e->getMessage());
             throw $e;
         }
+    }
+
+    private function avaliarAlertaOrcamento(int $utilizadorId, int $categoriaId, string $data): void
+    {
+        try {
+            $dataObj = new \DateTimeImmutable($data);
+            $mes = (int)$dataObj->format('n');
+            $ano = (int)$dataObj->format('Y');
+
+            $status = $this->orcamentoService->obterStatusPorCategoriaPeriodo($utilizadorId, $categoriaId, $mes, $ano);
+            if ($status === null) {
+                return;
+            }
+
+            $percentual = (float)$status['percentual_consumido'];
+            if ($percentual < 85.0) {
+                return;
+            }
+
+            $titulo = $percentual > 100.0 ? 'Orçamento Excedido' : 'Aviso de Limite Próximo';
+            $mensagem = sprintf(
+                'A categoria %s atingiu %.2f%% do orçamento (gasto: %.2f de %.2f).',
+                (string)$status['categoria'],
+                $percentual,
+                (float)$status['gasto_atual'],
+                (float)$status['limite']
+            );
+
+            $this->notificacaoService->criarNotificacao($utilizadorId, $titulo, $mensagem);
+        } catch (\Throwable $e) {
+            // Não bloqueia criação da transação caso o alerta falhe.
+            error_log('Falha ao gerar alerta de orçamento: ' . $e->getMessage());
+        }
+    }
+
+    private function calcularSaldoDisponivel(int $utilizadorId, ?int $ignorarTransacaoId = null): float
+    {
+        $transacoes = $this->transacaoRepository->findByUser($utilizadorId);
+        $receitas = 0.0;
+        $despesas = 0.0;
+
+        foreach ($transacoes as $transacao) {
+            if ($ignorarTransacaoId !== null && $transacao->getId() === $ignorarTransacaoId) {
+                continue;
+            }
+
+            if ($transacao->getTipo() === 'receita') {
+                $receitas += $transacao->getValor();
+            } elseif ($transacao->getTipo() === 'despesa') {
+                $despesas += $transacao->getValor();
+            }
+        }
+
+        $reservadoMetas = $this->metaFinanceiraRepository->obterTotalReservadoAtivo($utilizadorId);
+        return max(0.0, ($receitas - $despesas) - $reservadoMetas);
     }
 }
 ?>

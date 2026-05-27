@@ -165,6 +165,10 @@ class CategoriaService
     public function removerCategoria(int $id, int $utilizadorId): bool
     {
         try {
+            if ($this->categoriaRepository->possuiTransacoes($id, $utilizadorId)) {
+                throw new \Exception('Não é permitido remover categoria com transações associadas');
+            }
+
             $resultado = $this->categoriaRepository->delete($id, $utilizadorId);
 
             if (!$resultado) {

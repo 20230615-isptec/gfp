@@ -4,6 +4,7 @@ import { environment } from '../../../environments/environment';
 import { DatePipe } from '@angular/common';
 import { AuthService } from '../../core/auth.service';
 import { PreferencesService } from '../../core/preferences.service';
+import { NotificationService } from '../../core/notification.service';
 
 interface AdminUser { id: number; nome: string; email: string; tipo_usuario_id: number; criado_em: string; }
 
@@ -40,11 +41,34 @@ export class AdminComponent {
   private http = inject(HttpClient);
   private auth = inject(AuthService);
   prefs = inject(PreferencesService);
+  private notifications = inject(NotificationService);
   users = signal<AdminUser[]>([]);
   me = signal(this.auth.currentUser()?.id || 0);
 
   ngOnInit() { this.loadUsers(); }
-  loadUsers() { this.http.get<any>(`${environment.apiUrl}/admin/utilizadores`).subscribe({ next: (r: any) => this.users.set(Array.isArray(r?.data) ? r.data : []) }); }
-  toggleRole(user: AdminUser) { const nextType = user.tipo_usuario_id === 1 ? 2 : 1; this.http.put(`${environment.apiUrl}/admin/utilizadores?id=${user.id}`, { tipo_usuario_id: nextType }).subscribe({ next: () => this.loadUsers() }); }
-  remove(id: number) { this.http.delete(`${environment.apiUrl}/admin/utilizadores?id=${id}`).subscribe({ next: () => this.loadUsers() }); }
+  loadUsers() {
+    this.http.get<any>(`${environment.apiUrl}/admin/utilizadores`).subscribe({
+      next: (r: any) => this.users.set(Array.isArray(r?.data) ? r.data : []),
+      error: (e) => this.notifications.error(e?.error?.message ?? this.prefs.t('Não foi possível carregar os utilizadores.', 'Could not load users.'))
+    });
+  }
+  toggleRole(user: AdminUser) {
+    const nextType = user.tipo_usuario_id === 1 ? 2 : 1;
+    this.http.put(`${environment.apiUrl}/admin/utilizadores?id=${user.id}`, { tipo_usuario_id: nextType }).subscribe({
+      next: () => {
+        this.notifications.success(nextType === 1 ? this.prefs.t('Permissão de administrador concedida.', 'Admin permission granted.') : this.prefs.t('Permissão de administrador removida.', 'Admin permission removed.'));
+        this.loadUsers();
+      },
+      error: (e) => this.notifications.error(e?.error?.message ?? this.prefs.t('Não foi possível alterar a permissão.', 'Could not change the permission.'))
+    });
+  }
+  remove(id: number) {
+    this.http.delete(`${environment.apiUrl}/admin/utilizadores?id=${id}`).subscribe({
+      next: () => {
+        this.notifications.success(this.prefs.t('Utilizador excluído.', 'User deleted.'));
+        this.loadUsers();
+      },
+      error: (e) => this.notifications.error(e?.error?.message ?? this.prefs.t('Não foi possível excluir este utilizador.', 'Could not delete this user.'))
+    });
+  }
 }

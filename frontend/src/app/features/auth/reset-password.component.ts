@@ -3,6 +3,7 @@ import { FormBuilder, Validators, ReactiveFormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { PreferencesService } from '../../core/preferences.service';
 import { AuthService } from '../../core/auth.service';
+import { NotificationService } from '../../core/notification.service';
 
 @Component({
   selector: 'app-reset-password',
@@ -26,8 +27,8 @@ import { AuthService } from '../../core/auth.service';
           <p class="font-body-md text-on-surface-variant mb-8">{{ prefs.t('Digite a nova senha da sua conta.', 'Enter your account new password.') }}</p>
 
           <form [formGroup]="form" (ngSubmit)="submit()" class="space-y-4">
-            <input formControlName="newPassword" type="password" [placeholder]="prefs.t('Nova senha', 'New password')" class="w-full bg-surface-container-highest border border-outline-variant rounded-lg py-3 px-4"/>
-            <input formControlName="confirmPassword" type="password" [placeholder]="prefs.t('Confirmar senha', 'Confirm password')" class="w-full bg-surface-container-highest border border-outline-variant rounded-lg py-3 px-4"/>
+            <input formControlName="newPassword" type="password" minlength="8" [placeholder]="prefs.t('Nova senha', 'New password')" class="w-full bg-surface-container-highest border border-outline-variant rounded-lg py-3 px-4"/>
+            <input formControlName="confirmPassword" type="password" minlength="8" [placeholder]="prefs.t('Confirmar senha', 'Confirm password')" class="w-full bg-surface-container-highest border border-outline-variant rounded-lg py-3 px-4"/>
 
             @if(successMessage()) {
               <div class="p-3 bg-emerald-glow/10 border border-emerald-glow/30 rounded text-emerald-glow text-sm">{{ successMessage() }}</div>
@@ -53,10 +54,11 @@ export class ResetPasswordComponent {
   private router = inject(Router);
   private authService = inject(AuthService);
   prefs = inject(PreferencesService);
+  private notifications = inject(NotificationService);
 
   form = this.fb.group({
     newPassword: ['', [Validators.required, Validators.minLength(8)]],
-    confirmPassword: ['', [Validators.required]]
+    confirmPassword: ['', [Validators.required, Validators.minLength(8)]]
   });
 
   loading = signal(false);
@@ -66,12 +68,16 @@ export class ResetPasswordComponent {
   submit() {
     const token = this.route.snapshot.queryParamMap.get('token') ?? '';
     if (!token) {
-      this.errorMessage.set(this.prefs.t('Token invalido ou ausente.', 'Invalid or missing token.'));
+      const message = this.prefs.t('Token invalido ou ausente.', 'Invalid or missing token.');
+      this.errorMessage.set(message);
+      this.notifications.error(message);
       return;
     }
 
     if (this.form.invalid || this.form.value.newPassword !== this.form.value.confirmPassword) {
-      this.errorMessage.set(this.prefs.t('Verifique os dados informados.', 'Please check the entered data.'));
+      const message = this.prefs.t('Verifique os dados informados.', 'Please check the entered data.');
+      this.errorMessage.set(message);
+      this.notifications.warning(message);
       return;
     }
 
@@ -81,12 +87,16 @@ export class ResetPasswordComponent {
     this.authService.resetPassword(token, this.form.value.newPassword || '').subscribe({
       next: (res) => {
         this.loading.set(false);
-        this.successMessage.set(res.message || this.prefs.t('Senha atualizada com sucesso.', 'Password updated successfully.'));
+        const message = res.message || this.prefs.t('Senha atualizada com sucesso.', 'Password updated successfully.');
+        this.successMessage.set(message);
+        this.notifications.success(message);
         setTimeout(() => this.router.navigate(['/login']), 1500);
       },
       error: (err) => {
         this.loading.set(false);
-        this.errorMessage.set(err?.error?.message || this.prefs.t('Falha ao redefinir senha.', 'Failed to reset password.'));
+        const message = err?.error?.message || this.prefs.t('Falha ao redefinir senha.', 'Failed to reset password.');
+        this.errorMessage.set(message);
+        this.notifications.error(message);
       }
     });
   }

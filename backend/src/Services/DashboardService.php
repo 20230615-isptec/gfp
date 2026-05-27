@@ -3,7 +3,9 @@ declare(strict_types=1);
 
 namespace Src\Services;
 
+use Src\Repositories\UsuarioRepository;
 use Src\Repositories\TransacaoRepository;
+use Src\Repositories\MetaFinanceiraRepository;
 
 /**
  * Serviço de Dashboard
@@ -22,6 +24,8 @@ class DashboardService
      * @var TransacaoRepository
      */
     private TransacaoRepository $transacaoRepository;
+    private UsuarioRepository $usuarioRepository;
+    private MetaFinanceiraRepository $metaFinanceiraRepository;
 
     /**
      * URL da API externa de cotações
@@ -38,9 +42,15 @@ class DashboardService
      * 
      * @param TransacaoRepository $transacaoRepository
      */
-    public function __construct(TransacaoRepository $transacaoRepository)
+    public function __construct(
+        TransacaoRepository $transacaoRepository,
+        UsuarioRepository $usuarioRepository,
+        MetaFinanceiraRepository $metaFinanceiraRepository
+    )
     {
         $this->transacaoRepository = $transacaoRepository;
+        $this->usuarioRepository = $usuarioRepository;
+        $this->metaFinanceiraRepository = $metaFinanceiraRepository;
     }
 
     /**
@@ -79,17 +89,34 @@ class DashboardService
                 }
             }
 
-            $saldoAtual = $totalReceitas - $totalDespesas;
-
             $cotacoesAtuais = $this->obterCotacoes();
+            $moedaPreferida = 'AOA';
+            $usuario = $this->usuarioRepository->findById($utilizadorId);
+            if ($usuario !== null && $usuario->getMoedaPreferida() !== '') {
+                $moedaPreferida = strtoupper($usuario->getMoedaPreferida());
+            }
+
+            $totalReceitasConvertido = $this->converterDeAoa($totalReceitas, $moedaPreferida, $cotacoesAtuais);
+            $totalDespesasConvertido = $this->converterDeAoa($totalDespesas, $moedaPreferida, $cotacoesAtuais);
+            $patrimonioTotal = $totalReceitasConvertido - $totalDespesasConvertido;
+            $totalMetasAoa = $this->metaFinanceiraRepository->obterTotalReservadoAtivo($utilizadorId);
+            $totalMetas = $this->converterDeAoa($totalMetasAoa, $moedaPreferida, $cotacoesAtuais);
+            $divida = max(0.0, abs(min(0.0, $patrimonioTotal)));
+            $saldoDisponivel = $divida > 0.0 ? 0.0 : max(0.0, $patrimonioTotal - $totalMetas);
 
             return [
                 'success' => true,
                 'resumo' => [
-                    'receitas' => round($totalReceitas, 2),
-                    'despesas' => round($totalDespesas, 2),
-                    'saldo_atual' => round($saldoAtual, 2),
-                    'total_transacoes' => count($transacoes)
+                    'receitas' => round($totalReceitasConvertido, 2),
+                    'despesas' => round($totalDespesasConvertido, 2),
+                    'saldo_atual' => round($patrimonioTotal, 2),
+                    'saldo_disponivel' => round($saldoDisponivel, 2),
+                    'divida' => round($divida, 2),
+                    'em_divida' => $divida > 0.0,
+                    'total_em_metas' => round($totalMetas, 2),
+                    'patrimonio_total' => round($patrimonioTotal, 2),
+                    'total_transacoes' => count($transacoes),
+                    'moeda' => $moedaPreferida
                 ],
                 'cotacoes_atuais' => $cotacoesAtuais,
                 'data_atualizacao' => date('Y-m-d H:i:s')
@@ -171,6 +198,145 @@ class DashboardService
             error_log('Erro ao processar cotações: ' . $e->getMessage());
             return null;
         }
+    }
+
+    /**
+     * Gera relatório mensal com saldo, top despesa e comparação com mês anterior.
+     *
+     * @param int $utilizadorId
+     * @param int $mes
+     * @param int $ano
+     * @return array<string, mixed>
+     */
+    public function gerarRelatorioMensal(int $utilizadorId, int $mes, int $ano): array
+    {
+        if ($mes < 1 || $mes > 12) {
+            throw new \InvalidArgumentException('mes deve estar entre 1 e 12');
+        }
+
+        if ($ano < 2000 || $ano > 2100) {
+            throw new \InvalidArgumentException('ano invalido');
+        }
+
+        $gastosPorCategoria = $this->transacaoRepository->getGastosPorCategoria($utilizadorId, $mes, $ano);
+
+        $totalDespesas = 0.0;
+        foreach ($gastosPorCategoria as $gasto) {
+            $totalDespesas += (float)($gasto['total_gasto'] ?? 0);
+        }
+
+        $dataInicio = sprintf('%04d-%02d-01', $ano, $mes);
+        $dataFim = date('Y-m-t', strtotime($dataInicio));
+        $receitasMes = $this->transacaoRepository->findByDateRange($utilizadorId, $dataInicio, $dataFim, 'receita');
+
+        $totalReceitas = 0.0;
+        foreach ($receitasMes as $transacao) {
+            if ($transacao instanceof \Src\Models\Transacao) {
+                $totalReceitas += $transacao->getValor();
+            }
+        }
+
+        $saldoFinal = $totalReceitas - $totalDespesas;
+
+        $topDespesa = null;
+        if (!empty($gastosPorCategoria)) {
+            $topDespesa = [
+                'categoria_id' => (int)$gastosPorCategoria[0]['categoria_id'],
+                'categoria' => (string)$gastosPorCategoria[0]['categoria_nome'],
+                'valor' => round((float)$gastosPorCategoria[0]['total_gasto'], 2)
+            ];
+        }
+
+        $mesAnterior = $mes - 1;
+        $anoAnterior = $ano;
+        if ($mesAnterior === 0) {
+            $mesAnterior = 12;
+            $anoAnterior--;
+        }
+
+        $gastosMesAnterior = $this->transacaoRepository->getGastosPorCategoria($utilizadorId, $mesAnterior, $anoAnterior);
+        $totalDespesasMesAnterior = 0.0;
+        foreach ($gastosMesAnterior as $gastoAnterior) {
+            $totalDespesasMesAnterior += (float)($gastoAnterior['total_gasto'] ?? 0);
+        }
+
+        $comparacaoTexto = 'Sem dados suficientes para comparação com o mês passado';
+        $variacaoPercentual = null;
+        if ($totalDespesasMesAnterior > 0) {
+            $variacaoPercentual = (($totalDespesas - $totalDespesasMesAnterior) / $totalDespesasMesAnterior) * 100;
+            $direcao = $variacaoPercentual >= 0 ? 'mais' : 'menos';
+            $comparacaoTexto = sprintf(
+                'Gastou %s %.2f%% do que no mês passado',
+                $direcao,
+                abs($variacaoPercentual)
+            );
+        }
+
+        return [
+            'periodo' => [
+                'mes' => $mes,
+                'ano' => $ano
+            ],
+            'saldo_final' => round($saldoFinal, 2),
+            'total_receitas' => round($totalReceitas, 2),
+            'total_despesas' => round($totalDespesas, 2),
+            'top_despesa' => $topDespesa,
+            'comparacao_mes_anterior' => [
+                'mes' => $mesAnterior,
+                'ano' => $anoAnterior,
+                'variacao_percentual' => $variacaoPercentual !== null ? round($variacaoPercentual, 2) : null,
+                'mensagem' => $comparacaoTexto
+            ],
+            'gastos_por_categoria' => array_map(
+                static fn(array $item): array => [
+                    'categoria_id' => (int)$item['categoria_id'],
+                    'categoria' => (string)$item['categoria_nome'],
+                    'total_gasto' => round((float)$item['total_gasto'], 2)
+                ],
+                $gastosPorCategoria
+            )
+        ];
+    }
+
+    /**
+     * Obtém a tendência financeira dos últimos 6 meses.
+     *
+     * @param int $utilizadorId
+     * @return array<int, array<string, mixed>>
+     */
+    public function getTendenciasSeisMeses(int $utilizadorId): array
+    {
+        $historico = $this->transacaoRepository->getHistoricoSeisMeses($utilizadorId);
+
+        return array_map(
+            static fn(array $linha): array => [
+                'ano' => (int)$linha['ano'],
+                'mes' => (int)$linha['mes'],
+                'receitas' => round((float)$linha['total_receitas'], 2),
+                'despesas' => round((float)$linha['total_despesas'], 2),
+                'saldo' => round((float)$linha['total_receitas'] - (float)$linha['total_despesas'], 2)
+            ],
+            $historico
+        );
+    }
+
+    private function converterDeAoa(float $valor, string $moedaPreferida, ?array $cotacoes): float
+    {
+        if ($moedaPreferida === 'AOA') {
+            return $valor;
+        }
+
+        if ($cotacoes === null) {
+            return $valor;
+        }
+
+        $key = 'AOA_' . $moedaPreferida;
+        $taxa = $cotacoes[$key]['cotacao'] ?? null;
+        if (!is_numeric($taxa) || (float)$taxa <= 0.0) {
+            return $valor;
+        }
+
+        return $valor * (float)$taxa;
     }
 }
 ?>

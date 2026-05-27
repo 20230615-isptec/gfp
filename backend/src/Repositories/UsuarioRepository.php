@@ -54,7 +54,7 @@ class UsuarioRepository
     {
         try {
             $query = sprintf(
-                'SELECT id, nome, email, senha_hash, tipo_usuario_id, criado_em 
+                'SELECT id, nome, email, senha_hash, tipo_usuario_id, avatar_url, moeda_preferida, telefone, idioma_preferido, tema_preferido, criado_em 
                  FROM %s 
                  WHERE email = :email AND ativo = TRUE',
                 self::TABLE
@@ -74,6 +74,11 @@ class UsuarioRepository
                 email: $resultado['email'],
                 senhaHash: $resultado['senha_hash'],
                 tipoUsuarioId: (int)$resultado['tipo_usuario_id'],
+                avatarUrl: $resultado['avatar_url'] ?? null,
+                moedaPreferida: (string)($resultado['moeda_preferida'] ?? 'AOA'),
+                telefone: $resultado['telefone'] ?? null,
+                idiomaPreferido: (string)($resultado['idioma_preferido'] ?? 'pt-BR'),
+                temaPreferido: (string)($resultado['tema_preferido'] ?? 'dark'),
                 id: (int)$resultado['id'],
                 criadoEm: $resultado['criado_em']
             );
@@ -96,7 +101,7 @@ class UsuarioRepository
     {
         try {
             $query = sprintf(
-                'SELECT id, nome, email, senha_hash, tipo_usuario_id, criado_em 
+                'SELECT id, nome, email, senha_hash, tipo_usuario_id, avatar_url, moeda_preferida, telefone, idioma_preferido, tema_preferido, criado_em 
                  FROM %s 
                  WHERE id = :id AND ativo = TRUE',
                 self::TABLE
@@ -116,6 +121,11 @@ class UsuarioRepository
                 email: $resultado['email'],
                 senhaHash: $resultado['senha_hash'],
                 tipoUsuarioId: (int)$resultado['tipo_usuario_id'],
+                avatarUrl: $resultado['avatar_url'] ?? null,
+                moedaPreferida: (string)($resultado['moeda_preferida'] ?? 'AOA'),
+                telefone: $resultado['telefone'] ?? null,
+                idiomaPreferido: (string)($resultado['idioma_preferido'] ?? 'pt-BR'),
+                temaPreferido: (string)($resultado['tema_preferido'] ?? 'dark'),
                 id: (int)$resultado['id'],
                 criadoEm: $resultado['criado_em']
             );
@@ -245,7 +255,7 @@ class UsuarioRepository
         try {
             $expiryColumn = $this->getResetTokenExpiryColumn();
             $query = sprintf(
-                'SELECT id, nome, email, senha_hash, tipo_usuario_id, criado_em 
+                'SELECT id, nome, email, senha_hash, tipo_usuario_id, avatar_url, moeda_preferida, telefone, idioma_preferido, tema_preferido, criado_em 
                  FROM %s 
                  WHERE reset_token = :reset_token 
                  AND %s > NOW() 
@@ -268,6 +278,11 @@ class UsuarioRepository
                 email: $resultado['email'],
                 senhaHash: $resultado['senha_hash'],
                 tipoUsuarioId: (int)$resultado['tipo_usuario_id'],
+                avatarUrl: $resultado['avatar_url'] ?? null,
+                moedaPreferida: (string)($resultado['moeda_preferida'] ?? 'AOA'),
+                telefone: $resultado['telefone'] ?? null,
+                idiomaPreferido: (string)($resultado['idioma_preferido'] ?? 'pt-BR'),
+                temaPreferido: (string)($resultado['tema_preferido'] ?? 'dark'),
                 id: (int)$resultado['id'],
                 criadoEm: $resultado['criado_em']
             );
@@ -468,6 +483,108 @@ class UsuarioRepository
             error_log('Erro ao eliminar utilizador: ' . $e->getMessage());
             throw new PDOException('Erro ao eliminar utilizador: ' . $e->getMessage(), 0, $e);
         }
+    }
+
+    /**
+     * Atualiza dados de perfil expandido do utilizador.
+     *
+     * @param int $utilizadorId
+     * @param array<string, mixed> $dados
+     * @return bool
+     */
+    public function atualizarPerfil(int $utilizadorId, array $dados): bool
+    {
+        try {
+            $campos = [];
+
+            if (array_key_exists('avatar_url', $dados)) {
+                $campos[] = 'avatar_url = :avatar_url';
+            }
+
+            if (array_key_exists('moeda_preferida', $dados)) {
+                $campos[] = 'moeda_preferida = :moeda_preferida';
+            }
+
+            if (array_key_exists('telefone', $dados)) {
+                $campos[] = 'telefone = :telefone';
+            }
+
+            if (array_key_exists('idioma_preferido', $dados)) {
+                $campos[] = 'idioma_preferido = :idioma_preferido';
+            }
+
+            if (array_key_exists('tema_preferido', $dados)) {
+                $campos[] = 'tema_preferido = :tema_preferido';
+            }
+
+            if ($campos === []) {
+                return false;
+            }
+
+            $query = sprintf(
+                'UPDATE %s SET %s WHERE id = :id',
+                self::TABLE,
+                implode(', ', $campos)
+            );
+
+            $stmt = $this->pdo->prepare($query);
+
+            $id = $utilizadorId;
+            $stmt->bindParam(':id', $id, PDO::PARAM_INT);
+
+            if (array_key_exists('avatar_url', $dados)) {
+                $avatarUrl = $dados['avatar_url'];
+                $stmt->bindParam(':avatar_url', $avatarUrl, PDO::PARAM_STR);
+            }
+
+            if (array_key_exists('moeda_preferida', $dados)) {
+                $moedaPreferida = $dados['moeda_preferida'];
+                $stmt->bindParam(':moeda_preferida', $moedaPreferida, PDO::PARAM_STR);
+            }
+
+            if (array_key_exists('telefone', $dados)) {
+                $telefone = $dados['telefone'];
+                if ($telefone === null || $telefone === '') {
+                    $stmt->bindValue(':telefone', null, PDO::PARAM_NULL);
+                } else {
+                    $stmt->bindParam(':telefone', $telefone, PDO::PARAM_STR);
+                }
+            }
+
+            if (array_key_exists('idioma_preferido', $dados)) {
+                $idiomaPreferido = $dados['idioma_preferido'];
+                $stmt->bindParam(':idioma_preferido', $idiomaPreferido, PDO::PARAM_STR);
+            }
+
+            if (array_key_exists('tema_preferido', $dados)) {
+                $temaPreferido = $dados['tema_preferido'];
+                $stmt->bindParam(':tema_preferido', $temaPreferido, PDO::PARAM_STR);
+            }
+
+            return $stmt->execute();
+        } catch (PDOException $e) {
+            error_log('Erro ao atualizar perfil de utilizador: ' . $e->getMessage());
+            throw new PDOException('Erro ao atualizar perfil: ' . $e->getMessage(), 0, $e);
+        }
+    }
+
+    public function getPerfilExpandido(int $utilizadorId): ?array
+    {
+        $usuario = $this->findById($utilizadorId);
+        if ($usuario === null) {
+            return null;
+        }
+
+        return [
+            'id' => $usuario->getId(),
+            'name' => $usuario->getNome(),
+            'email' => $usuario->getEmail(),
+            'avatar_url' => $usuario->getAvatarUrl(),
+            'moeda_preferida' => $usuario->getMoedaPreferida(),
+            'phone' => $usuario->getTelefone(),
+            'language' => $usuario->getIdiomaPreferido(),
+            'theme' => $usuario->getTemaPreferido()
+        ];
     }
 
     private function getResetTokenExpiryColumn(): string

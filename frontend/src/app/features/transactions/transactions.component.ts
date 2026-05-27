@@ -4,9 +4,10 @@ import { environment } from '../../../environments/environment';
 import { CurrencyPipe, DatePipe, NgClass } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { PreferencesService } from '../../core/preferences.service';
+import { NotificationService } from '../../core/notification.service';
 
 interface Categoria { id: number; nome: string; tipo: 'receita' | 'despesa'; }
-interface Transacao { id: number; categoria_id: number; valor: number; tipo: 'receita'|'despesa'; data: string; descricao: string; }
+interface Transacao { id: number | string; categoria_id: number | null; valor: number; tipo: 'receita'|'despesa'|'poupanca'; data: string; descricao: string; bloqueado?: boolean; }
 
 @Component({
   selector: 'app-transactions',
@@ -21,15 +22,27 @@ interface Transacao { id: number; categoria_id: number; valor: number; tipo: 're
       </div>
     </div>
 
-    <div class="glass-card rounded-xl p-4 flex flex-col md:flex-row gap-4 items-center justify-between mb-6">
-      <div class="relative w-full md:w-96"><span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant">search</span><input [(ngModel)]="q" type="text" [placeholder]="prefs.t('Buscar por descricao...', 'Search by description...')" class="input-base py-2.5 pl-10 pr-4 text-sm"/></div>
-      <div class="flex flex-wrap gap-3 w-full md:w-auto">
-        <select [(ngModel)]="catFilter" class="bg-surface-container-highest border border-outline-variant/30 rounded-lg py-2.5 pl-3 pr-8 text-sm appearance-none"><option value="">{{ prefs.t('Todas as Categorias', 'All Categories') }}</option>@for(c of categorias(); track c.id){<option [value]="c.id">{{c.nome}}</option>}</select>
-        <div class="flex bg-surface-container-highest rounded-lg p-1 border border-outline-variant/30">
-          <button (click)="tipoFilter=''" class="px-3 py-1.5 rounded-md text-xs" [ngClass]="tipoFilter==='' ? 'bg-surface-container text-on-surface':'text-on-surface-variant'">{{ prefs.t('Todos', 'All') }}</button>
-          <button (click)="tipoFilter='receita'" class="px-3 py-1.5 rounded-md text-xs" [ngClass]="tipoFilter==='receita' ? 'bg-primary/10 text-primary':'text-on-surface-variant'">{{ prefs.t('Receitas', 'Income') }}</button>
-          <button (click)="tipoFilter='despesa'" class="px-3 py-1.5 rounded-md text-xs" [ngClass]="tipoFilter==='despesa' ? 'bg-danger-red/10 text-danger-red':'text-on-surface-variant'">{{ prefs.t('Despesas', 'Expenses') }}</button>
+    <div class="glass-card rounded-xl p-4 mb-6">
+      <div class="filter-shell">
+        <div class="filter-field md:max-w-sm">
+          <span class="material-symbols-outlined filter-icon">search</span>
+          <input [(ngModel)]="q" type="text" [placeholder]="prefs.t('Buscar por descricao...', 'Search by description...')" class="input-base text-sm"/>
         </div>
+        <div class="filter-field compact">
+          <span class="material-symbols-outlined filter-icon">category</span>
+          <select [(ngModel)]="catFilter" class="input-base filter-select text-sm">
+            <option value="">{{ prefs.t('Todas categorias', 'All categories') }}</option>
+            @for(c of categorias(); track c.id){<option [value]="c.id">{{c.nome}}</option>}
+          </select>
+        </div>
+        <div class="filter-pill-group">
+          <button type="button" (click)="tipoFilter=''" class="filter-pill" [ngClass]="{'active': tipoFilter===''}"><span class="material-symbols-outlined text-[16px]">receipt_long</span>{{ prefs.t('Todos', 'All') }}</button>
+          <button type="button" (click)="tipoFilter='receita'" class="filter-pill" [ngClass]="{'active': tipoFilter==='receita'}"><span class="material-symbols-outlined text-[16px]">trending_up</span>{{ prefs.t('Receitas', 'Income') }}</button>
+          <button type="button" (click)="tipoFilter='despesa'" class="filter-pill danger" [ngClass]="{'active': tipoFilter==='despesa'}"><span class="material-symbols-outlined text-[16px]">trending_down</span>{{ prefs.t('Despesas', 'Expenses') }}</button>
+        </div>
+        @if(hasFilters()) {
+          <button type="button" class="soft-btn inline-flex items-center gap-1" (click)="clearFilters()"><span class="material-symbols-outlined text-[16px]">filter_alt_off</span>{{ prefs.t('Limpar', 'Clear') }}</button>
+        }
       </div>
     </div>
 
@@ -42,9 +55,21 @@ interface Transacao { id: number; categoria_id: number; valor: number; tipo: 're
                 <td class="py-4 px-6">{{ t.descricao }}</td>
                 <td class="py-4 px-6 text-on-surface-variant">{{ t.data | date:'dd/MM/yyyy' }}</td>
                 <td class="py-4 px-6">{{ categoriaNome(t.categoria_id) }}</td>
-                <td class="py-4 px-6"><span class="inline-flex px-2 py-0.5 rounded-full text-xs" [ngClass]="t.tipo==='receita'?'bg-primary/10 text-primary':'bg-danger-red/10 text-danger-red'">{{ t.tipo === 'receita' ? prefs.t('receita', 'income') : prefs.t('despesa', 'expense') }}</span></td>
-                <td class="py-4 px-6 text-right font-data" [ngClass]="t.tipo==='receita'?'text-primary':'text-danger-red'">{{ t.valor | currency:'AOA':'symbol' }}</td>
-                <td class="py-4 px-6 text-right"><button (click)="edit(t)" class="soft-btn mr-2">{{ prefs.t('Editar', 'Edit') }}</button><button (click)="remove(t.id)" class="soft-btn soft-btn-danger text-danger-red">{{ prefs.t('Excluir', 'Delete') }}</button></td>
+                <td class="py-4 px-6">
+                  <span class="inline-flex px-2 py-0.5 rounded-full text-xs"
+                        [ngClass]="t.tipo==='receita'?'bg-primary/10 text-primary':(t.tipo==='poupanca'?'bg-indigo-soft/10 text-indigo-soft':'bg-danger-red/10 text-danger-red')">
+                    {{ tipoLabel(t.tipo) }}
+                  </span>
+                </td>
+                <td class="py-4 px-6 text-right font-data" [ngClass]="t.tipo==='receita'?'text-primary':(t.tipo==='poupanca'?'text-indigo-soft':'text-danger-red')">{{ t.valor | currency:'AOA':'symbol' }}</td>
+                <td class="py-4 px-6 text-right">
+                  @if(!t.bloqueado) {
+                    <button (click)="edit(t)" class="soft-btn mr-2">{{ prefs.t('Editar', 'Edit') }}</button>
+                    <button (click)="remove(t.id)" class="soft-btn soft-btn-danger text-danger-red">{{ prefs.t('Excluir', 'Delete') }}</button>
+                  } @else {
+                    <span class="text-xs text-on-surface-variant">{{ prefs.t('Movimento de meta', 'Goal movement') }}</span>
+                  }
+                </td>
               </tr>
             } @empty { <tr><td colspan="6" class="py-8 text-center text-on-surface-variant">{{ prefs.t('Nenhuma transacao encontrada.', 'No transactions found.') }}</td></tr> }
           </tbody>
@@ -120,6 +145,7 @@ interface Transacao { id: number; categoria_id: number; valor: number; tipo: 're
 export class TransactionsComponent {
   private http = inject(HttpClient);
   prefs = inject(PreferencesService);
+  private notifications = inject(NotificationService);
   transacoes = signal<Transacao[]>([]);
   categorias = signal<Categoria[]>([]);
   showForm = signal(false);
@@ -136,24 +162,41 @@ export class TransactionsComponent {
       next: (r: any) => {
         const list = Array.isArray(r?.data) ? r.data : [];
         this.transacoes.set(list.map((item: any) => ({ ...item, descricao: item?.descricao ?? item?.Descricao ?? '' })));
-      }
+      },
+      error: (e) => this.notifications.error(e?.error?.message ?? this.prefs.t('Não foi possível carregar as transações. Tente atualizar a página.', 'Could not load transactions. Try refreshing the page.'))
     });
   }
 
   filtered() {
     return this.transacoes().filter((t) => (!this.q || t.descricao.toLowerCase().includes(this.q.toLowerCase())) && (!this.catFilter || String(t.categoria_id) === String(this.catFilter)) && (!this.tipoFilter || t.tipo === this.tipoFilter));
   }
-  categoriaNome(id: number) { return this.categorias().find((c) => c.id === id)?.nome || '-'; }
+  categoriaNome(id: number | null) { return id === null ? this.prefs.t('Cofre virtual', 'Virtual vault') : (this.categorias().find((c) => c.id === id)?.nome || '-'); }
+  tipoLabel(tipo: Transacao['tipo']) { return tipo === 'receita' ? this.prefs.t('receita', 'income') : (tipo === 'poupanca' ? this.prefs.t('poupança', 'savings') : this.prefs.t('despesa', 'expense')); }
   openNew() { this.editingId.set(null); this.form = { descricao: '', valor: '', data: new Date().toISOString().split('T')[0], tipo: 'receita', categoria_id: '' }; this.showForm.set(true); }
-  edit(t: Transacao) { this.editingId.set(t.id); this.form = { ...t }; this.showForm.set(true); }
+  edit(t: Transacao) { this.editingId.set(Number(t.id)); this.form = { ...t }; this.showForm.set(true); }
   closeForm() { this.showForm.set(false); }
 
   save() {
+    if (!this.validarFormulario()) {
+      return;
+    }
+
     const payload = { ...this.form, descricao: this.form.descricao ?? this.form.Descricao ?? '', valor: Number(this.form.valor), categoria_id: Number(this.form.categoria_id) };
     const req = this.editingId() ? this.http.put(`${environment.apiUrl}/transacoes?id=${this.editingId()}`, payload) : this.http.post(`${environment.apiUrl}/transacoes`, payload);
-    req.subscribe({ next: () => { this.closeForm(); this.load(); } });
+    req.subscribe({
+      next: () => { this.notifications.success(this.prefs.t('Transação guardada com sucesso.', 'Transaction saved successfully.')); this.closeForm(); this.load(); },
+      error: (e) => this.notifications.error(e?.error?.message ?? this.prefs.t('Revise os dados e tente guardar novamente.', 'Review the data and try saving again.'))
+    });
   }
-  remove(id: number) { this.http.delete(`${environment.apiUrl}/transacoes?id=${id}`).subscribe({ next: () => this.load() }); }
+  remove(id: number | string) {
+    this.http.delete(`${environment.apiUrl}/transacoes?id=${id}`).subscribe({
+      next: () => {
+        this.notifications.success(this.prefs.t('Transação removida da sua lista.', 'Transaction removed from your list.'));
+        this.load();
+      },
+      error: (e) => this.notifications.error(e?.error?.message ?? this.prefs.t('Não foi possível excluir esta transação.', 'Could not delete this transaction.'))
+    });
+  }
 
   exportCsv() {
     this.http.get(`${environment.apiUrl}/exportar/csv`, { responseType: 'blob' }).subscribe({
@@ -164,7 +207,52 @@ export class TransactionsComponent {
         a.download = `transacoes-${new Date().toISOString().slice(0, 10)}.csv`;
         a.click();
         URL.revokeObjectURL(url);
-      }
+        this.notifications.success(this.prefs.t('CSV exportado. Verifique a pasta de downloads.', 'CSV exported. Check your downloads folder.'));
+      },
+      error: () => this.notifications.error(this.prefs.t('Não foi possível exportar o CSV neste momento.', 'Could not export the CSV right now.'))
     });
+  }
+
+  hasFilters(): boolean { return !!this.q || !!this.catFilter || !!this.tipoFilter; }
+  clearFilters(): void { this.q = ''; this.catFilter = ''; this.tipoFilter = ''; }
+
+  private validarFormulario(): boolean {
+    const descricao = String(this.form.descricao ?? this.form.Descricao ?? '').trim();
+    const valor = Number(this.form.valor);
+    const categoriaId = Number(this.form.categoria_id);
+    const data = String(this.form.data ?? '');
+
+    if (descricao.length < 3) {
+      this.notifications.warning(this.prefs.t('Informe uma descrição com pelo menos 3 caracteres.', 'Enter a description with at least 3 characters.'));
+      return false;
+    }
+
+    if (!Number.isFinite(valor) || valor <= 0) {
+      this.notifications.warning(this.prefs.t('O valor da transação deve ser maior que zero.', 'Transaction amount must be greater than zero.'));
+      return false;
+    }
+
+    if (!categoriaId) {
+      this.notifications.warning(this.prefs.t('Selecione uma categoria para a transação.', 'Select a transaction category.'));
+      return false;
+    }
+
+    if (this.form.tipo !== 'receita' && this.form.tipo !== 'despesa') {
+      this.notifications.warning(this.prefs.t('Selecione se a transação é receita ou despesa.', 'Select whether the transaction is income or expense.'));
+      return false;
+    }
+
+    if (!this.isIsoDate(data)) {
+      this.notifications.warning(this.prefs.t('Informe uma data válida.', 'Enter a valid date.'));
+      return false;
+    }
+
+    return true;
+  }
+
+  private isIsoDate(value: string): boolean {
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
+    const date = new Date(`${value}T00:00:00`);
+    return !Number.isNaN(date.getTime()) && date.toISOString().slice(0, 10) === value;
   }
 }

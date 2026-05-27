@@ -10,9 +10,7 @@ export class PreferencesService {
       const savedTheme = localStorage.getItem('theme_mode');
       const savedLang = localStorage.getItem('theme_lang');
 
-      const dark = savedTheme ? savedTheme === 'dark' : true;
-      this.isDarkMode.set(dark);
-      document.documentElement.classList.toggle('dark', dark);
+      this.applyTheme(savedTheme === 'light' || savedTheme === 'system' ? savedTheme : 'dark');
 
       if (savedLang === 'PT' || savedLang === 'EN') {
         this.lang.set(savedLang);
@@ -22,23 +20,35 @@ export class PreferencesService {
   }
 
   toggleTheme() {
-    if (typeof document !== 'undefined') {
-      const next = !this.isDarkMode();
-      this.isDarkMode.set(next);
-      document.documentElement.classList.toggle('dark', next);
-      localStorage.setItem('theme_mode', next ? 'dark' : 'light');
-    }
+    this.setTheme(this.isDarkMode() ? 'light' : 'dark');
   }
 
   toggleLanguage() {
-    this.lang.update((l) => {
-      const next = l === 'PT' ? 'EN' : 'PT';
-      localStorage.setItem('theme_lang', next);
-      if (typeof document !== 'undefined') {
-        document.documentElement.lang = next === 'PT' ? 'pt' : 'en';
-      }
-      return next;
-    });
+    this.setLanguage(this.lang() === 'PT' ? 'EN' : 'PT');
+  }
+
+  setLanguage(mode: 'PT' | 'EN') {
+    this.lang.set(mode);
+    localStorage.setItem('theme_lang', mode);
+    if (typeof document !== 'undefined') {
+      document.documentElement.lang = mode === 'PT' ? 'pt' : 'en';
+    }
+  }
+
+  setTheme(mode: 'dark' | 'light' | 'system') {
+    this.applyTheme(mode);
+  }
+
+  private applyTheme(mode: 'dark' | 'light' | 'system') {
+    const prefersDark = typeof window !== 'undefined' && window.matchMedia
+      ? window.matchMedia('(prefers-color-scheme: dark)').matches
+      : true;
+    const dark = mode === 'system' ? prefersDark : mode === 'dark';
+    this.isDarkMode.set(dark);
+    if (typeof document !== 'undefined') {
+      document.documentElement.classList.toggle('dark', dark);
+    }
+    localStorage.setItem('theme_mode', mode);
   }
 
   t(pt: string, en: string): string {

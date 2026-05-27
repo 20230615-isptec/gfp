@@ -4,6 +4,7 @@ import { Router, RouterLink } from '@angular/router';
 import { PreferencesService } from '../../core/preferences.service';
 import { NgClass } from '@angular/common';
 import { AuthService } from '../../core/auth.service';
+import { NotificationService } from '../../core/notification.service';
 
 @Component({
   selector: 'app-forgot-password',
@@ -19,10 +20,10 @@ import { AuthService } from '../../core/auth.service';
           </div>
 
           <h1 class="font-headline-md text-on-surface mb-2">{{ prefs.t('Recuperar senha', 'Recover password') }}</h1>
-          <p class="font-body-md text-on-surface-variant mb-6">Insira seu email para receber instrucoes de recuperacao.</p>
+          <p class="font-body-md text-on-surface-variant mb-6">{{ prefs.t('Insira seu e-mail para receber instruções de recuperação.', 'Enter your email to receive recovery instructions.') }}</p>
 
           <form [formGroup]="forgotForm" (ngSubmit)="onSubmit()" class="space-y-4">
-            <input formControlName="email" type="email" placeholder="contato@exemplo.com" class="w-full bg-surface-container-highest border border-outline-variant rounded-lg py-3 px-4" [ngClass]="{'border-danger-red': isFieldInvalid('email')}"/>
+            <input formControlName="email" type="email" [placeholder]="prefs.t('contato@exemplo.com', 'contact@example.com')" class="w-full bg-surface-container-highest border border-outline-variant rounded-lg py-3 px-4" [ngClass]="{'border-danger-red': isFieldInvalid('email')}"/>
             @if(errorMessage()) { <div class="p-3 bg-danger-red/10 border border-danger-red/30 rounded text-danger-red text-sm">{{ errorMessage() }}</div> }
             @if(successMessage()) { <div class="p-3 bg-emerald-glow/10 border border-emerald-glow/30 rounded text-emerald-glow text-sm">{{ prefs.t('Email enviado com sucesso.', 'Email sent successfully.') }}</div> }
             <button type="submit" [disabled]="loading()" class="w-full bg-primary text-on-primary-fixed-variant font-label-md py-3.5 rounded-lg">{{ loading() ? prefs.t('Enviando...', 'Sending...') : prefs.t('Recuperar senha', 'Recover password') }}</button>
@@ -39,6 +40,7 @@ export class ForgotPasswordComponent {
   private router = inject(Router);
   private authService = inject(AuthService);
   prefs = inject(PreferencesService);
+  private notifications = inject(NotificationService);
 
   forgotForm = this.fb.group({ email: ['', [Validators.required, Validators.email]] });
   loading = signal(false);
@@ -53,6 +55,7 @@ export class ForgotPasswordComponent {
   onSubmit() {
     if (this.forgotForm.invalid) {
       this.forgotForm.markAllAsTouched();
+      this.notifications.warning(this.prefs.t('Informe um e-mail válido para recuperação.', 'Enter a valid email for recovery.'));
       return;
     }
 
@@ -63,15 +66,15 @@ export class ForgotPasswordComponent {
       next: () => {
         this.loading.set(false);
         this.successMessage.set(true);
+        this.notifications.success(this.prefs.t('Email enviado. Verifique a caixa de entrada e o spam.', 'Email sent. Check your inbox and spam folder.'));
         setTimeout(() => this.router.navigate(['/login']), 1800);
       },
       error: (err) => {
         this.loading.set(false);
-        this.errorMessage.set(err?.error?.message || 'Erro ao solicitar recuperacao.');
+        const message = err?.error?.message || this.prefs.t('Erro ao solicitar recuperação.', 'Error requesting recovery.');
+        this.errorMessage.set(message);
+        this.notifications.error(message);
       }
     });
   }
 }
-
-
-

@@ -4,6 +4,7 @@ import { environment } from '../../../environments/environment';
 import { FormsModule } from '@angular/forms';
 import { NgClass } from '@angular/common';
 import { PreferencesService } from '../../core/preferences.service';
+import { NotificationService } from '../../core/notification.service';
 
 interface Categoria { id: number; nome: string; tipo: 'receita' | 'despesa'; }
 
@@ -24,7 +25,22 @@ interface Categoria { id: number; nome: string; tipo: 'receita' | 'despesa'; }
     </div>
 
     <div class="glass-card rounded-xl overflow-hidden app-enter">
-      <div class="p-4 border-b border-outline-variant/10"><input [(ngModel)]="q" class="input-base" [placeholder]="prefs.t('Procurar categorias...', 'Search categories...')"/></div>
+      <div class="p-4 border-b border-outline-variant/10">
+        <div class="filter-shell">
+          <div class="filter-field md:max-w-sm">
+            <span class="material-symbols-outlined filter-icon">search</span>
+            <input [(ngModel)]="q" class="input-base" [placeholder]="prefs.t('Procurar categorias...', 'Search categories...')"/>
+          </div>
+          <div class="filter-pill-group">
+            <button type="button" class="filter-pill" [ngClass]="{'active': tipoFilter === ''}" (click)="tipoFilter = ''"><span class="material-symbols-outlined text-[16px]">category</span>{{ prefs.t('Todas', 'All') }}</button>
+            <button type="button" class="filter-pill" [ngClass]="{'active': tipoFilter === 'receita'}" (click)="tipoFilter = 'receita'"><span class="material-symbols-outlined text-[16px]">trending_up</span>{{ prefs.t('Receitas', 'Income') }}</button>
+            <button type="button" class="filter-pill danger" [ngClass]="{'active': tipoFilter === 'despesa'}" (click)="tipoFilter = 'despesa'"><span class="material-symbols-outlined text-[16px]">trending_down</span>{{ prefs.t('Despesas', 'Expenses') }}</button>
+          </div>
+          @if(q || tipoFilter) {
+            <button type="button" class="soft-btn inline-flex items-center gap-1" (click)="clearFilters()"><span class="material-symbols-outlined text-[16px]">filter_alt_off</span>{{ prefs.t('Limpar', 'Clear') }}</button>
+          }
+        </div>
+      </div>
       <table class="w-full"><thead><tr><th class="p-4 text-left">{{ prefs.t('Nome', 'Name') }}</th><th class="p-4 text-left">{{ prefs.t('Tipo', 'Type') }}</th><th class="p-4 text-right">{{ prefs.t('Acoes', 'Actions') }}</th></tr></thead>
         <tbody>
           @for (cat of filtered(); track cat.id) {
@@ -70,21 +86,67 @@ interface Categoria { id: number; nome: string; tipo: 'receita' | 'despesa'; }
 export class CategoriesComponent {
   private http = inject(HttpClient);
   prefs = inject(PreferencesService);
+  private notifications = inject(NotificationService);
   categorias = signal<Categoria[]>([]);
   q = '';
+  tipoFilter: '' | 'receita' | 'despesa' = '';
   showForm = signal(false);
   editingId = signal<number | null>(null);
   form: any = { nome: '', tipo: 'receita' };
 
   ngOnInit() { this.load(); }
-  load() { this.http.get<any>(`${environment.apiUrl}/categorias`).subscribe({ next: (r: any) => this.categorias.set(Array.isArray(r?.data) ? r.data : []) }); }
-  filtered() { return this.categorias().filter((c) => !this.q || c.nome.toLowerCase().includes(this.q.toLowerCase())); }
+  load() {
+    this.http.get<any>(`${environment.apiUrl}/categorias`).subscribe({
+      next: (r: any) => this.categorias.set(Array.isArray(r?.data) ? r.data : []),
+      error: (e) => this.notifications.error(e?.error?.message ?? this.prefs.t('Não foi possível carregar as categorias.', 'Could not load categories.'))
+    });
+  }
+  filtered() { return this.categorias().filter((c) => (!this.q || c.nome.toLowerCase().includes(this.q.toLowerCase())) && (!this.tipoFilter || c.tipo === this.tipoFilter)); }
   totalCount() { return this.categorias().length; }
   receitasCount() { return this.categorias().filter((c) => c.tipo === 'receita').length; }
   despesasCount() { return this.categorias().filter((c) => c.tipo === 'despesa').length; }
   openNew() { this.editingId.set(null); this.form = { nome: '', tipo: 'receita' }; this.showForm.set(true); }
   edit(c: Categoria) { this.editingId.set(c.id); this.form = { ...c }; this.showForm.set(true); }
   closeForm() { this.showForm.set(false); }
-  save() { const req = this.editingId() ? this.http.put(`${environment.apiUrl}/categorias?id=${this.editingId()}`, this.form) : this.http.post(`${environment.apiUrl}/categorias`, this.form); req.subscribe({ next: () => { this.closeForm(); this.load(); } }); }
-  remove(id: number) { this.http.delete(`${environment.apiUrl}/categorias?id=${id}`).subscribe({ next: () => this.load() }); }
+  save() {
+    if (!this.validarFormulario()) {
+      return;
+    }
+
+    const req = this.editingId() ? this.http.put(`${environment.apiUrl}/categorias?id=${this.editingId()}`, this.form) : this.http.post(`${environment.apiUrl}/categorias`, this.form);
+    req.subscribe({
+      next: () => {
+        this.notifications.success(this.editingId() ? this.prefs.t('Categoria atualizada com sucesso.', 'Category updated successfully.') : this.prefs.t('Categoria criada e pronta para uso.', 'Category created and ready to use.'));
+        this.closeForm();
+        this.load();
+      },
+      error: (e) => this.notifications.error(e?.error?.message ?? this.prefs.t('Revise o nome e o tipo da categoria.', 'Review the category name and type.'))
+    });
+  }
+  remove(id: number) {
+    this.http.delete(`${environment.apiUrl}/categorias?id=${id}`).subscribe({
+      next: () => {
+        this.notifications.success(this.prefs.t('Categoria excluída.', 'Category deleted.'));
+        this.load();
+      },
+      error: (e) => this.notifications.error(e?.error?.message ?? this.prefs.t('Não foi possível excluir esta categoria. Verifique se ela está em uso.', 'Could not delete this category. Check if it is in use.'))
+    });
+  }
+  clearFilters(): void { this.q = ''; this.tipoFilter = ''; }
+
+  private validarFormulario(): boolean {
+    const nome = String(this.form.nome ?? '').trim();
+    if (nome.length < 3) {
+      this.notifications.warning(this.prefs.t('Use um nome de categoria com pelo menos 3 caracteres.', 'Use a category name with at least 3 characters.'));
+      return false;
+    }
+
+    if (this.form.tipo !== 'receita' && this.form.tipo !== 'despesa') {
+      this.notifications.warning(this.prefs.t('Selecione um tipo válido para a categoria.', 'Select a valid category type.'));
+      return false;
+    }
+
+    this.form.nome = nome;
+    return true;
+  }
 }

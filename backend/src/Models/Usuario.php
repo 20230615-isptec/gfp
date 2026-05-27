@@ -42,6 +42,11 @@ class Usuario
      * @var int
      */
     private int $tipoUsuarioId;
+    private ?string $avatarUrl;
+    private string $moedaPreferida;
+    private ?string $telefone;
+    private string $idiomaPreferido;
+    private string $temaPreferido;
 
     /**
      * Data e hora de criação do registo
@@ -64,6 +69,11 @@ class Usuario
         string $email,
         string $senhaHash,
         int $tipoUsuarioId,
+        ?string $avatarUrl = null,
+        string $moedaPreferida = 'AOA',
+        ?string $telefone = null,
+        string $idiomaPreferido = 'pt-BR',
+        string $temaPreferido = 'dark',
         ?int $id = null,
         ?string $criadoEm = null
     ) {
@@ -71,6 +81,11 @@ class Usuario
         $this->email = $email;
         $this->senhaHash = $senhaHash;
         $this->tipoUsuarioId = $tipoUsuarioId;
+        $this->avatarUrl = $avatarUrl;
+        $this->moedaPreferida = $moedaPreferida;
+        $this->telefone = $telefone;
+        $this->idiomaPreferido = $idiomaPreferido;
+        $this->temaPreferido = $temaPreferido;
         $this->id = $id;
         $this->criadoEm = $criadoEm;
     }
@@ -123,6 +138,31 @@ class Usuario
     public function getTipoUsuarioId(): int
     {
         return $this->tipoUsuarioId;
+    }
+
+    public function getAvatarUrl(): ?string
+    {
+        return $this->avatarUrl;
+    }
+
+    public function getMoedaPreferida(): string
+    {
+        return $this->moedaPreferida;
+    }
+
+    public function getTelefone(): ?string
+    {
+        return $this->telefone;
+    }
+
+    public function getIdiomaPreferido(): string
+    {
+        return $this->idiomaPreferido;
+    }
+
+    public function getTemaPreferido(): string
+    {
+        return $this->temaPreferido;
     }
 
     /**

@@ -275,5 +275,26 @@ class CategoriaRepository
             throw new PDOException('Erro ao deletar categoria: ' . $e->getMessage(), 0, $e);
         }
     }
+
+    public function possuiTransacoes(int $id, int $utilizadorId): bool
+    {
+        try {
+            $query = 'SELECT COUNT(*) AS total
+                      FROM transacoes
+                      WHERE categoria_id = :categoria_id AND utilizador_id = :utilizador_id';
+
+            $stmt = $this->pdo->prepare($query);
+            $stmt->execute([
+                ':categoria_id' => $id,
+                ':utilizador_id' => $utilizadorId
+            ]);
+
+            $resultado = $stmt->fetch(PDO::FETCH_ASSOC);
+            return ((int)($resultado['total'] ?? 0)) > 0;
+        } catch (PDOException $e) {
+            error_log('Erro ao verificar transacoes na categoria: ' . $e->getMessage());
+            throw new PDOException('Erro ao verificar transacoes da categoria: ' . $e->getMessage(), 0, $e);
+        }
+    }
 }
 ?>

@@ -1,83 +1,72 @@
-# 🏗️ Sistema de Gestão Financeira Pessoal
+# Sistema de Gestão Financeira Pessoal
 
-## Estrutura do Projeto
+Aplicação web para controlo de finanças pessoais com backend em PHP puro e frontend em Angular.
 
-Este projeto está estruturado em **duas camadas principais**:
+## O que o projeto cobre
 
-### 📁 Backend (API REST em PHP Puro)
-```
+- autenticação
+- dashboard financeiro
+- transações e categorias
+- orçamentos e metas
+- recorrências
+- relatórios
+- notificações
+- perfil com idioma e tema
+
+## Estrutura
+
+```text
 backend/
-├── config/           # Configurações (BD, CORS, JWT)
-├── src/
-│   ├── Controllers/  # Validação de requests e respostas JSON
-│   ├── Services/     # Regras e lógica de negócio
-│   ├── Repositories/ # Consultas SQL e persistência de dados
-│   └── Models/       # Entidades de dados
-├── index.php         # Front Controller (Roteador Principal)
-└── .htaccess        # Reescrita de URLs para RESTful API
-```
+  config/
+  src/
+    Controllers/
+    Services/
+    Repositories/
+    Models/
+  index.php
 
-### 📁 Frontend (Angular - Standalone Components)
-```
 frontend/
-└── src/
-    └── app/
-        ├── core/           # Guards de rotas, Interceptors HTTP (JWT)
-        ├── shared/         # Componentes, pipes e diretivas globais
-        │   ├── components/
-        │   ├── pipes/
-        │   └── directives/
-        ├── features/       # Módulos funcionais
-        │   ├── auth/       # Autenticação
-        │   ├── dashboard/  # Dashboard principal
-        │   └── transacoes/ # Gestão de transações
-        ├── services/       # Serviços para consumo da API
-        └── app.config.ts   # Configuração da aplicação
+  src/
+    app/
+      core/
+      layout/
+      shared/
+      features/
+    environments/
 ```
 
-## 🚀 Criando a Estrutura
+## Requisitos
 
-### Opção 1: Windows (Recomendado)
-Duplo clique no ficheiro `create-structure.bat` para executar automaticamente.
+- XAMPP ou equivalente com Apache e MySQL
+- PHP compatível com o backend
+- Node.js e npm
 
-### Opção 2: Terminal/PowerShell
+## Como executar
+
+### Backend
+
+1. Copia o projeto para `C:\xampp\htdocs\gfp`.
+2. Cria a base de dados no MySQL.
+3. Importa `backend/database.sql`.
+4. Se necessário, importa também `backend/database_updates.sql`.
+5. Ajusta `backend/config/database.php` com as credenciais locais.
+
+### Frontend
+
 ```powershell
-.\create-structure.bat
+cd C:\xampp\htdocs\gfp\frontend
+npm install
+npm start
 ```
 
-### Opção 3: Linux/MacOS
-```bash
-chmod +x create-structure.sh
-./create-structure.sh
+Para gerar a build de produção:
+
+```powershell
+npm run build
 ```
 
-### Opção 4: Comandos Manuais (Windows CMD)
-```cmd
-mkdir backend\config
-mkdir backend\src\Controllers
-mkdir backend\src\Services
-mkdir backend\src\Repositories
-mkdir backend\src\Models
-mkdir frontend\src\app\core
-mkdir frontend\src\app\shared\components
-mkdir frontend\src\app\shared\pipes
-mkdir frontend\src\app\shared\directives
-mkdir frontend\src\app\features\auth
-mkdir frontend\src\app\features\dashboard
-mkdir frontend\src\app\features\transacoes
-mkdir frontend\src\app\services
-```
+## Notas
 
-## 📋 Próximos Passos
-
-1. ✅ Criar estrutura de diretórios
-2. ⏳ Configurar `backend/config/` com variáveis de ambiente
-3. ⏳ Criar `backend/.htaccess` para reescrever URLs
-4. ⏳ Implementar roteamento principal em `backend/index.php`
-5. ⏳ Inicializar projeto Angular no `frontend/`
-6. ⏳ Configurar serviços de autenticação
-7. ⏳ Implementar componentes compartilhados
-
----
-
-**Desenvolvido com ❤️ para Gestão Financeira Pessoal**
+- O idioma da interface é persistido nas preferências do utilizador.
+- O tema também é guardado entre sessões.
+- As mensagens de sucesso, erro e aviso aparecem em notificações e também podem ser revistas na aba de notificações.

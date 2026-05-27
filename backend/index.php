@@ -126,16 +126,29 @@ require_once BASE_PATH . '/config/database.php';
 require_once BASE_PATH . '/src/Models/Usuario.php';
 require_once BASE_PATH . '/src/Models/Categoria.php';
 require_once BASE_PATH . '/src/Models/Transacao.php';
+require_once BASE_PATH . '/src/Models/Orcamento.php';
+require_once BASE_PATH . '/src/Models/TransacaoRecorrente.php';
+require_once BASE_PATH . '/src/Models/Notificacao.php';
+require_once BASE_PATH . '/src/Models/MetaFinanceira.php';
 require_once BASE_PATH . '/src/Repositories/UsuarioRepository.php';
 require_once BASE_PATH . '/src/Repositories/CategoriaRepository.php';
 require_once BASE_PATH . '/src/Repositories/TransacaoRepository.php';
+require_once BASE_PATH . '/src/Repositories/OrcamentoRepository.php';
+require_once BASE_PATH . '/src/Repositories/TransacaoRecorrenteRepository.php';
+require_once BASE_PATH . '/src/Repositories/NotificacaoRepository.php';
+require_once BASE_PATH . '/src/Repositories/MetaFinanceiraRepository.php';
 require_once BASE_PATH . '/src/Services/JwtService.php';
 require_once BASE_PATH . '/src/Services/AuthService.php';
 require_once BASE_PATH . '/src/Services/SmtpMailer.php';
 require_once BASE_PATH . '/src/Services/PasswordRecoveryService.php';
+require_once BASE_PATH . '/src/Services/PerfilService.php';
 require_once BASE_PATH . '/src/Services/CategoriaService.php';
 require_once BASE_PATH . '/src/Services/TransacaoService.php';
 require_once BASE_PATH . '/src/Services/DashboardService.php';
+require_once BASE_PATH . '/src/Services/OrcamentoService.php';
+require_once BASE_PATH . '/src/Services/TransacaoRecorrenteService.php';
+require_once BASE_PATH . '/src/Services/NotificacaoService.php';
+require_once BASE_PATH . '/src/Services/MetaFinanceiraService.php';
 require_once BASE_PATH . '/src/Middlewares/AuthMiddleware.php';
 require_once BASE_PATH . '/src/Middlewares/AdminMiddleware.php';
 require_once BASE_PATH . '/src/Controllers/AuthController.php';
@@ -144,6 +157,11 @@ require_once BASE_PATH . '/src/Controllers/CategoriaController.php';
 require_once BASE_PATH . '/src/Controllers/TransacaoController.php';
 require_once BASE_PATH . '/src/Controllers/DashboardController.php';
 require_once BASE_PATH . '/src/Controllers/ExportacaoController.php';
+require_once BASE_PATH . '/src/Controllers/PerfilController.php';
+require_once BASE_PATH . '/src/Controllers/OrcamentoController.php';
+require_once BASE_PATH . '/src/Controllers/TransacaoRecorrenteController.php';
+require_once BASE_PATH . '/src/Controllers/NotificacaoController.php';
+require_once BASE_PATH . '/src/Controllers/MetaFinanceiraController.php';
 
 // ========================================================================
 // SISTEMA DE ROTEAMENTO
@@ -273,6 +291,10 @@ $pdo = $database->getConnection();
 $usuarioRepository = new \Src\Repositories\UsuarioRepository($pdo);
 $categoriaRepository = new \Src\Repositories\CategoriaRepository($pdo);
 $transacaoRepository = new \Src\Repositories\TransacaoRepository($pdo);
+$orcamentoRepository = new \Src\Repositories\OrcamentoRepository($pdo);
+$transacaoRecorrenteRepository = new \Src\Repositories\TransacaoRecorrenteRepository($pdo);
+$notificacaoRepository = new \Src\Repositories\NotificacaoRepository($pdo);
+$metaFinanceiraRepository = new \Src\Repositories\MetaFinanceiraRepository($pdo);
 
 $jwtService = new \Src\Services\JwtService();
 $authService = new \Src\Services\AuthService($usuarioRepository, $jwtService);
@@ -286,16 +308,46 @@ $smtpMailer = new \Src\Services\SmtpMailer(
     SMTP_SECURE
 );
 $passwordRecoveryService = new \Src\Services\PasswordRecoveryService($usuarioRepository, $smtpMailer);
+$perfilService = new \Src\Services\PerfilService(
+    $usuarioRepository,
+    BASE_PATH . '/uploads/avatars',
+    '/backend/uploads/avatars'
+);
 $categoriaService = new \Src\Services\CategoriaService($categoriaRepository);
-$transacaoService = new \Src\Services\TransacaoService($transacaoRepository);
-$dashboardService = new \Src\Services\DashboardService($transacaoRepository);
+$dashboardService = new \Src\Services\DashboardService($transacaoRepository, $usuarioRepository, $metaFinanceiraRepository);
+$orcamentoService = new \Src\Services\OrcamentoService($orcamentoRepository, $categoriaRepository);
+$notificacaoService = new \Src\Services\NotificacaoService($notificacaoRepository);
+$metaFinanceiraService = new \Src\Services\MetaFinanceiraService(
+    $metaFinanceiraRepository,
+    $notificacaoService,
+    $transacaoRepository
+);
+$transacaoRecorrenteService = new \Src\Services\TransacaoRecorrenteService(
+    $transacaoRecorrenteRepository,
+    $transacaoRepository,
+    $categoriaRepository,
+    $metaFinanceiraRepository,
+    $notificacaoService
+);
+$transacaoService = new \Src\Services\TransacaoService(
+    $transacaoRepository,
+    $orcamentoService,
+    $notificacaoService,
+    $metaFinanceiraRepository,
+    $categoriaRepository
+);
 
 $authController = new \Src\Controllers\AuthController($authService, $passwordRecoveryService);
 $adminController = new \Src\Controllers\AdminController($usuarioRepository);
 $categoriaController = new \Src\Controllers\CategoriaController($categoriaService);
 $transacaoController = new \Src\Controllers\TransacaoController($transacaoService);
-$dashboardController = new \Src\Controllers\DashboardController($dashboardService);
+$dashboardController = new \Src\Controllers\DashboardController($dashboardService, $transacaoRecorrenteService, $metaFinanceiraService);
 $exportacaoController = new \Src\Controllers\ExportacaoController($transacaoService, $usuarioRepository);
+$perfilController = new \Src\Controllers\PerfilController($perfilService);
+$orcamentoController = new \Src\Controllers\OrcamentoController($orcamentoService);
+$transacaoRecorrenteController = new \Src\Controllers\TransacaoRecorrenteController($transacaoRecorrenteService);
+$notificacaoController = new \Src\Controllers\NotificacaoController($notificacaoService);
+$metaFinanceiraController = new \Src\Controllers\MetaFinanceiraController($metaFinanceiraService);
 
 $authMiddleware = new \Src\Middlewares\AuthMiddleware($jwtService);
 $adminMiddleware = new \Src\Middlewares\AdminMiddleware($jwtService);
@@ -396,6 +448,22 @@ $router->get('/api/dashboard', function () use ($authMiddleware, $dashboardContr
 });
 
 // ========================================================================
+// ROTA: GET /api/relatorios/mensal?mes=X&ano=Y
+// ========================================================================
+$router->get('/api/relatorios/mensal', function () use ($authMiddleware, $dashboardController): void {
+    $payload = $authMiddleware->handle();
+    $dashboardController->relatorioMensal($payload);
+});
+
+// ========================================================================
+// ROTA: GET /api/relatorios/tendencias
+// ========================================================================
+$router->get('/api/relatorios/tendencias', function () use ($authMiddleware, $dashboardController): void {
+    $payload = $authMiddleware->handle();
+    $dashboardController->tendencias($payload);
+});
+
+// ========================================================================
 // ROTA: GET /api/exportar/csv (Exportar em CSV)
 // ========================================================================
 $router->get('/api/exportar/csv', function () use ($authMiddleware, $exportacaoController): void {
@@ -467,6 +535,142 @@ $router->delete('/api/categorias', function () use ($authMiddleware, $categoriaC
 $router->put('/api/transacoes', function () use ($authMiddleware, $transacaoController): void {
     $payload = $authMiddleware->handle();
     $transacaoController->atualizar($payload);
+});
+
+// ========================================================================
+// ROTA: POST /api/perfil (Atualizar Perfil Expandido)
+// ========================================================================
+$router->post('/api/perfil', function () use ($authMiddleware, $perfilController): void {
+    $payload = $authMiddleware->handle();
+    $perfilController->atualizar($payload);
+});
+
+// ========================================================================
+// ROTA: GET /api/perfil (Obter Perfil Expandido)
+// ========================================================================
+$router->get('/api/perfil', function () use ($authMiddleware, $perfilController): void {
+    $payload = $authMiddleware->handle();
+    $perfilController->obter($payload);
+});
+
+// ========================================================================
+// ROTA: PUT /api/perfil (Atualizar Perfil Expandido)
+// ========================================================================
+$router->put('/api/perfil', function () use ($authMiddleware, $perfilController): void {
+    $payload = $authMiddleware->handle();
+    $perfilController->atualizar($payload);
+});
+
+// ========================================================================
+// ROTA: POST /api/orcamentos (Criar Orçamento)
+// ========================================================================
+$router->post('/api/orcamentos', function () use ($authMiddleware, $orcamentoController): void {
+    $payload = $authMiddleware->handle();
+    $orcamentoController->criar($payload);
+});
+
+// ========================================================================
+// ROTA: GET /api/orcamentos?mes=5&ano=2026 (Listar Orçamentos)
+// ========================================================================
+$router->get('/api/orcamentos', function () use ($authMiddleware, $orcamentoController): void {
+    $payload = $authMiddleware->handle();
+    $orcamentoController->listar($payload);
+});
+
+// ========================================================================
+// ROTA: GET /api/orcamentos/status?id=1 (Status do Orçamento)
+// ========================================================================
+$router->get('/api/orcamentos/status', function () use ($authMiddleware, $orcamentoController): void {
+    $payload = $authMiddleware->handle();
+    $orcamentoController->obterStatus($payload);
+});
+
+// ========================================================================
+// ROTA: POST /api/transacoes-recorrentes (Criar regra recorrente)
+// ========================================================================
+$router->post('/api/transacoes-recorrentes', function () use ($authMiddleware, $transacaoRecorrenteController): void {
+    $payload = $authMiddleware->handle();
+    $transacaoRecorrenteController->criar($payload);
+});
+
+// ========================================================================
+// ROTA: GET /api/transacoes-recorrentes (Listar regras recorrentes)
+// ========================================================================
+$router->get('/api/transacoes-recorrentes', function () use ($authMiddleware, $transacaoRecorrenteController): void {
+    $payload = $authMiddleware->handle();
+    $transacaoRecorrenteController->listar($payload);
+});
+
+// ========================================================================
+// ROTA: DELETE /api/transacoes-recorrentes?id=X (Desativar regra recorrente)
+// ========================================================================
+$router->delete('/api/transacoes-recorrentes', function () use ($authMiddleware, $transacaoRecorrenteController): void {
+    $payload = $authMiddleware->handle();
+    $transacaoRecorrenteController->desativar($payload);
+});
+
+// ========================================================================
+// ROTA: GET /api/notificacoes (Listar notificações não lidas)
+// ========================================================================
+$router->get('/api/notificacoes', function () use ($authMiddleware, $notificacaoController): void {
+    $payload = $authMiddleware->handle();
+    $notificacaoController->listar($payload);
+});
+
+// ========================================================================
+// ROTA: PUT /api/notificacoes/ler (Marcar notificação como lida)
+// ========================================================================
+$router->put('/api/notificacoes/ler', function () use ($authMiddleware, $notificacaoController): void {
+    $payload = $authMiddleware->handle();
+    $notificacaoController->marcarLida($payload);
+});
+
+// ========================================================================
+// ROTA: PUT /api/notificacoes/ler-todas (Marcar todas notificações como lidas)
+// ========================================================================
+$router->put('/api/notificacoes/ler-todas', function () use ($authMiddleware, $notificacaoController): void {
+    $payload = $authMiddleware->handle();
+    $notificacaoController->marcarTodasLidas($payload);
+});
+
+// ========================================================================
+// ROTA: POST /api/metas (Criar meta financeira)
+// ========================================================================
+$router->post('/api/metas', function () use ($authMiddleware, $metaFinanceiraController): void {
+    $payload = $authMiddleware->handle();
+    $metaFinanceiraController->criar($payload);
+});
+
+// ========================================================================
+// ROTA: GET /api/metas?ativas=1 (Listar metas)
+// ========================================================================
+$router->get('/api/metas', function () use ($authMiddleware, $metaFinanceiraController): void {
+    $payload = $authMiddleware->handle();
+    $metaFinanceiraController->listar($payload);
+});
+
+// ========================================================================
+// ROTA: PUT /api/metas?id=X (Atualizar meta)
+// ========================================================================
+$router->put('/api/metas', function () use ($authMiddleware, $metaFinanceiraController): void {
+    $payload = $authMiddleware->handle();
+    $metaFinanceiraController->atualizar($payload);
+});
+
+// ========================================================================
+// ROTA: DELETE /api/metas?id=X (Desativar meta)
+// ========================================================================
+$router->delete('/api/metas', function () use ($authMiddleware, $metaFinanceiraController): void {
+    $payload = $authMiddleware->handle();
+    $metaFinanceiraController->desativar($payload);
+});
+
+// ========================================================================
+// ROTA: POST /api/metas/aporte (Adicionar poupança à meta)
+// ========================================================================
+$router->post('/api/metas/aporte', function () use ($authMiddleware, $metaFinanceiraController): void {
+    $payload = $authMiddleware->handle();
+    $metaFinanceiraController->aportar($payload);
 });
 
 // ========================================================================
